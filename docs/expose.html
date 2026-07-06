@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Exposé · Case Study 2 · Devendra Singh Dhakad</title>
+<style>
+  /* Bundled Lato (OFL) so the PDF renders identically offline and embeds the font */
+  @font-face { font-family:'Lato'; src:url('assets/fonts/Lato-Regular.ttf'); font-weight:400; font-style:normal; }
+  @font-face { font-family:'Lato'; src:url('assets/fonts/Lato-Italic.ttf'); font-weight:400; font-style:italic; }
+  @font-face { font-family:'Lato'; src:url('assets/fonts/Lato-Bold.ttf'); font-weight:700; font-style:normal; }
+  @font-face { font-family:'Lato'; src:url('assets/fonts/Lato-BoldItalic.ttf'); font-weight:700; font-style:italic; }
+  @font-face { font-family:'Lato'; src:url('assets/fonts/Lato-Black.ttf'); font-weight:900; font-style:normal; }
+</style>
+<style>
+  :root {
+    --srh-orange: #E64415;
+    --ink: #1a1a1a;
+    --muted: #555555;
+    --link-blue: #0b5bd3;
+    --rule: #e3e3e3;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @page {
+    size: A4;
+    margin: 2.5cm;
+  }
+
+  html { background: #f0f0f0; }
+
+  body {
+    font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.4;
+    color: var(--ink);
+  }
+
+  /* Screen preview: simulate A4 pages */
+  .sheet {
+    background: #ffffff;
+    width: 21cm;
+    min-height: 29.7cm;
+    margin: 1.2rem auto;
+    padding: 2.5cm;
+    box-shadow: 0 2px 14px rgba(0,0,0,0.12);
+  }
+
+  @media print {
+    html { background: #ffffff; }
+    .sheet {
+      width: auto;
+      min-height: 0;
+      margin: 0;
+      padding: 0;
+      box-shadow: none;
+    }
+    /* Title page stands alone; body sections flow to keep within the ~5-page envelope */
+    .title-page { page-break-after: always; }
+    a { color: var(--link-blue) !important; }
+  }
+
+  /* ---------- Title page ---------- */
+  .title-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .title-page .logo {
+    margin-top: 1.2cm;
+    width: 3.4cm;
+    height: auto;
+  }
+  .title-page .doc-kind {
+    margin-top: 3.2cm;
+    font-size: 13pt;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .title-page h1 {
+    margin-top: 0.5cm;
+    font-size: 30pt;
+    font-weight: 900;
+    letter-spacing: 0.01em;
+  }
+  .title-page .title-rule {
+    width: 2.6cm;
+    height: 2.5pt;
+    background: var(--srh-orange);
+    border: none;
+    margin: 1.1cm auto;
+  }
+  .title-page .working-title {
+    font-size: 14.5pt;
+    font-weight: 700;
+    line-height: 1.45;
+    max-width: 13.5cm;
+    text-wrap: balance;
+  }
+  .title-page .meta {
+    margin-top: 2.4cm;
+    font-size: 11.5pt;
+    line-height: 2.05;
+  }
+  .title-page .meta .name {
+    font-weight: 700;
+    font-size: 12.5pt;
+  }
+  .title-page .meta .sep { color: var(--srh-orange); padding: 0 0.45em; }
+  .title-page .date {
+    margin-top: 1.6cm;
+    color: var(--muted);
+    font-size: 11pt;
+  }
+
+  /* ---------- Sections ---------- */
+  section { margin-bottom: 0.45cm; }
+
+  section.no-break { break-inside: avoid; }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.55em;
+    margin-bottom: 0.32cm;
+    break-after: avoid;
+  }
+  .sec-head .num {
+    color: var(--srh-orange);
+    font-weight: 900;
+    font-size: 13pt;
+  }
+  .sec-head h2 {
+    font-size: 13pt;
+    font-weight: 900;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+  }
+  .sec-rule {
+    border: none;
+    height: 1pt;
+    background: var(--srh-orange);
+    opacity: 0.55;
+    margin: 0.32cm 0;
+  }
+
+  p { text-align: justify; hyphens: auto; margin-bottom: 0.2cm; }
+  p:last-child { margin-bottom: 0; }
+
+  .working-title-body {
+    font-size: 12.5pt;
+    font-weight: 700;
+    text-align: left;
+    line-height: 1.5;
+  }
+
+  h3.sub {
+    font-size: 11pt;
+    font-weight: 900;
+    margin: 0.35cm 0 0.15cm;
+    break-after: avoid;
+  }
+
+  ul, ol { margin: 0 0 0.3cm 0; padding-left: 1.5em; }
+  li { text-align: justify; margin-bottom: 0.13cm; }
+  li:last-child { margin-bottom: 0; }
+
+  a { color: var(--link-blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .gap-para {
+    font-style: italic;
+    margin-top: 0.35cm;
+  }
+
+  /* ---------- Tables ---------- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10pt;
+    margin-bottom: 0.35cm;
+  }
+  th {
+    text-align: left;
+    font-weight: 900;
+    font-size: 9.5pt;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0 0.5em 0.16cm 0;
+    border-bottom: 1pt solid #bbbbbb;
+    white-space: nowrap;
+  }
+  td {
+    vertical-align: top;
+    padding: 0.18cm 0.5em 0.18cm 0;
+    text-align: left;
+  }
+  tr { break-inside: avoid; }
+  td.phase, td.weeks { font-weight: 700; white-space: nowrap; }
+  table.timeline td.weeks { width: 2.4cm; }
+
+  /* ---------- References ---------- */
+  .refs-head {
+    font-size: 13pt;
+    font-weight: 900;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+    color: var(--srh-orange);
+    margin-bottom: 0.32cm;
+    break-after: avoid;
+  }
+  .refs p {
+    text-align: left;
+    padding-left: 1.7em;
+    text-indent: -1.7em;
+    margin-bottom: 0.14cm;
+    font-size: 10pt;
+    line-height: 1.32;
+    break-inside: avoid;
+  }
+  .refs i { font-style: italic; }
+</style>
+</head>
+<body>
+
+<!-- ===================== TITLE PAGE ===================== -->
+<div class="sheet title-page" data-screen-label="Title page">
+  <img class="logo" src="assets/srh_logo.jpg" alt="SRH logo">
+
+  <div class="doc-kind">Case Study 2</div>
+  <h1>Exposé</h1>
+
+  <hr class="title-rule">
+
+  <div class="working-title">Building and Validating a Metal&ndash;Organic Framework Synthesis Knowledge Graph with Large Language Models</div>
+
+  <div class="meta">
+    <div class="name">Devendra Singh Dhakad<span class="sep">&bull;</span>Matriculation No. 100004684</div>
+    <div>M.Sc. Data Science and Artificial Intelligence</div>
+    <div>Supervisor: Prof. Dr. Mehrdad Jalali</div>
+    <div>SRH University of Applied Sciences Heidelberg</div>
+  </div>
+
+  <div class="date">11 June 2026</div>
+</div>
+
+<!-- ===================== BODY ===================== -->
+<div class="sheet" data-screen-label="Sections 1–3">
+
+  <section>
+    <div class="sec-head"><span class="num">1</span><h2>Working Title</h2></div>
+    <p class="working-title-body">&ldquo;Building and Validating a Metal&ndash;Organic Framework Synthesis Knowledge Graph with Large Language Models&rdquo;</p>
+  </section>
+
+  <hr class="sec-rule">
+
+  <section>
+    <div class="sec-head"><span class="num">2</span><h2>Introduction &amp; Relevance</h2></div>
+    <p>Metal&ndash;organic frameworks (MOFs) are among the most intensively studied porous crystalline materials, with over 100,000 synthesised structures recorded in the Cambridge Structural Database and applications spanning CO<sub>2</sub> capture, gas storage and separation, catalysis, sensing, and drug delivery. Yet the practical knowledge of how a MOF is made (precursor, linker, solvent, method, temperature, time) remains locked in the prose of tens of thousands of publications, so synthesis planning still relies heavily on expert intuition and trial and error.</p>
+    <p>Large Language Models (LLMs) and Knowledge Graphs (KGs) offer a path to convert this text into a structured, queryable resource (Pan et al., 2024), and recent work demonstrates the approach at scale: Bai et al. (2025) built a 2.5-million-node knowledge graph for framework materials from over 100,000 articles. What remains under-quantified is reliability: how accurate are LLM-extracted synthesis records field by field, how do they compare with established text-mined databases and domain baselines, and what do open-weight models deliver relative to commercial APIs, at what cost?</p>
+    <p>This project builds and, crucially, validates a MOF synthesis knowledge graph. An end-to-end pipeline extracts complete synthesis records (precursors, linkers, solvents, methods, conditions, properties, applications) from open-access MOF literature into a Neo4j graph with full provenance. Extraction quality is validated against a hand-annotated gold standard, cross-checked against the DigiMOF (Glasby et al., 2023) and SynMOF (Luo et al., 2022) databases, and benchmarked against ChemDataExtractor and MatSciBERT. The outcome is a reproducible validation framework for LLM-based scientific extraction plus a practical artefact: a queryable, provenance-aware MOF synthesis KG that can feed downstream graph-based materials research (Jalali et al., 2023).</p>
+  </section>
+
+  <hr class="sec-rule">
+
+  <section>
+    <div class="sec-head"><span class="num">3</span><h2>Research Question &amp; Objectives</h2></div>
+
+    <h3 class="sub">Main Question</h3>
+    <ul>
+      <li>How accurately and reliably can Large Language Models extract complete MOF synthesis records (precursor, linker, solvent, method, conditions) from the scientific literature, measured against expert annotation, established text-mined databases (DigiMOF, SynMOF), and domain-specific baselines?</li>
+    </ul>
+
+    <h3 class="sub">Sub-questions</h3>
+    <ol>
+      <li>Which prompting strategy (zero-shot, few-shot, schema-guided, chain-of-thought) is most reliable for each field of a synthesis record?</li>
+      <li>Where and why do LLM extractions disagree with DigiMOF and SynMOF, and which source is correct when they do?</li>
+      <li>How do open-weight models (Llama-3) compare to commercial APIs (GPT-4o, Claude) on per-field accuracy, cost, and latency?</li>
+      <li>Can the resulting KG answer cross-paper aggregation queries (e.g., dominant solvent&ndash;temperature combinations per linker family) and, as a stretch goal, support KG-grounded question answering?</li>
+    </ol>
+
+    <h3 class="sub">Objectives</h3>
+    <ul>
+      <li>Finalise the MOF synthesis ontology (v0.2 drafted: eight entity types plus mandatory provenance) with supervisor input.</li>
+      <li>Assemble 300&ndash;500 open-access MOF synthesis papers via the CSD MOF subset, the DigiMOF article index, ChemRxiv, and PubMed Central OA.</li>
+      <li>Implement a unified extraction interface spanning LLM strategies and baselines (ChemDataExtractor 2.0, MatSciBERT).</li>
+      <li>Hand-annotate 150&ndash;200 synthesis paragraphs in Label Studio and define the field mapping for the DigiMOF/SynMOF agreement analysis.</li>
+      <li>Construct a Neo4j KG with chemical-name entity resolution and a Streamlit dashboard with natural-language-to-Cypher querying.</li>
+    </ul>
+  </section>
+
+</div>
+
+<div class="sheet" data-screen-label="Section 4 - State of the Art">
+
+  <section>
+    <div class="sec-head"><span class="num">4</span><h2>State of the Art</h2></div>
+    <ul>
+      <li><strong>Rule-based MOF text mining:</strong> ChemDataExtractor (Swain &amp; Cole, 2016) established schema-driven chemical extraction and powers this project&rsquo;s two reference databases: DigiMOF (Glasby et al., 2023; 15,501 MOFs, 52,680 synthesis-property records) and SynMOF (Luo et al., 2022). Rule-based extraction is precise but rigid: free-text conditions, unit variants, and implicit references are frequently missed.</li>
+      <li><strong>Domain-specific language models:</strong> MatSciBERT (Gupta et al., 2022) showed that domain pre-training substantially improves materials NER over general BERT, but such models need labelled training data and stop at entity level rather than complete synthesis records.</li>
+      <li><strong>LLM-based extraction in chemistry:</strong> Zheng et al. (2023) mined MOF synthesis parameters with ChatGPT across 228 articles; Dagdelen et al. (2024) and Polak &amp; Morgan (2024) generalised LLM extraction of structured scientific records; Shi et al. (2024) improved MOF synthesis-condition extraction with few-shot demonstrations; Lin et al. (2025) proposed a multi-agent extraction framework. These studies rely almost exclusively on commercial GPT models and validate against small in-house test sets.</li>
+      <li><strong>LLM-constructed knowledge graphs:</strong> Pan et al. (2024) chart the LLM-KG integration agenda; Bai et al. (2025) realised it for framework materials at scale, including KG-grounded question answering, and GraphRAG (Edge et al., 2024) shows the broader value of graph-grounded retrieval. Scale is demonstrated; per-field extraction validity is not the focus.</li>
+      <li><strong>Graph machine learning on MOF data:</strong> MOFGalaxyNet (Jalali et al., 2023) represents the MOF landscape as a network and predicts properties with graph convolutional networks, exemplifying the downstream applications that depend on reliable structured MOF data.</li>
+    </ul>
+    <p class="gap-para">No published study rigorously validates LLM-extracted MOF synthesis records field by field against both expert annotation and the established text-mined databases, and none quantifies the accuracy, cost, and latency trade-off of open-weight versus commercial models for this task. This project closes that gap and delivers the validated, provenance-aware knowledge graph that prior work presupposes.</p>
+  </section>
+
+  <hr class="sec-rule">
+
+  <section>
+    <div class="sec-head"><span class="num">5</span><h2>Methodology</h2></div>
+    <table>
+      <thead>
+        <tr>
+          <th>Phase</th>
+          <th>Method &amp; Tools</th>
+          <th>Sample &amp; Outputs</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="phase">1.&nbsp;Corpus Collection</td>
+          <td>Python; DOI lists from the CSD MOF subset and the DigiMOF article index; ChemRxiv and PubMed Central OA harvesting; GROBID / PyMuPDF for PDF parsing</td>
+          <td>300&ndash;500 open-access MOF synthesis papers; cleaned plain text plus metadata</td>
+        </tr>
+        <tr>
+          <td class="phase">2.&nbsp;Schema &amp; Annotation</td>
+          <td>JSON-Schema MOF ontology v0.2; manual annotation in Label Studio; field mapping to DigiMOF/SynMOF</td>
+          <td>Ontology spec; 150&ndash;200 hand-annotated synthesis paragraphs as gold standard; agreement-analysis protocol</td>
+        </tr>
+        <tr>
+          <td class="phase">3.&nbsp;Extraction Pipelines</td>
+          <td>LLM strand: LangChain/LlamaIndex with GPT-4o, Claude, Llama-3 (Ollama) under zero-shot, few-shot, schema-guided, and chain-of-thought prompting. Baselines: ChemDataExtractor 2.0, MatSciBERT.</td>
+          <td>Unified Extractor interface producing (subject, relation, object, provenance, confidence) records in an identical schema across all approaches</td>
+        </tr>
+        <tr>
+          <td class="phase">4.&nbsp;KG Construction</td>
+          <td>Neo4j (Docker); SBERT-based entity resolution with chemical-name normalisation; Cypher schema with provenance edges</td>
+          <td>Populated MOF synthesis KG (target: 5,000+ entities, 25,000+ relations) with full provenance</td>
+        </tr>
+        <tr>
+          <td class="phase">5.&nbsp;Validation &amp; Dashboard</td>
+          <td>Per-field precision/recall/F1 vs. gold standard; agreement analysis on papers shared with DigiMOF/SynMOF; cost and latency profiling; Streamlit dashboard with NL-to-Cypher</td>
+          <td>Evaluation report; interactive dashboard; stretch goal: KG-RAG vs. vanilla-RAG question answering</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>Ethics &amp; Reproducibility:</strong> Only open-access publications under permissive licences are processed. All code, prompts, the ontology, the gold standard, and the field mappings will be released in a public Git repository; the pipeline is containerised with Docker for one-command reproducibility, and all LLM calls are cached and logged so experiments can be replayed without re-incurring inference cost.</p>
+  </section>
+
+</div>
+
+<div class="sheet" data-screen-label="Sections 6–7">
+
+  <section>
+    <div class="sec-head"><span class="num">6</span><h2>Work Plan &amp; Timeline</h2></div>
+    <p>The project runs for 12 weeks (22 June 2026 &ndash; 15 September 2026).</p>
+    <table class="timeline">
+      <thead>
+        <tr>
+          <th>Week(s)</th>
+          <th>Task</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="weeks">1&ndash;2</td><td>Literature deep dive; finalise MOF ontology with supervisor; assemble corpus DOI lists</td></tr>
+        <tr><td class="weeks">3</td><td>PDF parsing pipeline; cleaned corpus; exploratory analysis of synthesis-paragraph coverage</td></tr>
+        <tr><td class="weeks">4&ndash;5</td><td>Implement LLM extraction pipelines (zero-shot, few-shot, schema-guided, CoT); implement baselines</td></tr>
+        <tr><td class="weeks">6</td><td>Hand-annotate gold standard; freeze evaluation protocol and DigiMOF/SynMOF field mapping</td></tr>
+        <tr><td class="weeks">7</td><td>Set up Neo4j; KG ingestion; entity resolution and chemical-name normalisation</td></tr>
+        <tr><td class="weeks">8</td><td>Run all extractors at scale; populate full KG; compute per-field metrics</td></tr>
+        <tr><td class="weeks">9</td><td>Agreement analysis vs. DigiMOF/SynMOF; error taxonomy; cost/latency comparison; ablations</td></tr>
+        <tr><td class="weeks">10</td><td>Streamlit dashboard with NL-to-Cypher and provenance views; stretch: KG-RAG QA</td></tr>
+        <tr><td class="weeks">11</td><td>End-to-end reproducibility (fresh Docker build); supervisor feedback round; polish</td></tr>
+        <tr><td class="weeks">12</td><td>Finalise report, code repository, and presentation slides</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr class="sec-rule">
+
+  <section>
+    <div class="sec-head"><span class="num">7</span><h2>Expected Results &amp; Outlook</h2></div>
+    <ul>
+      <li><strong>Quantitative:</strong> Per-field precision/recall/F1 for every extractor and prompting combination (target F1 &ge; 0.80 on well-defined fields such as precursor, linker, solvent; honest reporting on harder fields such as process conditions); agreement rates with DigiMOF/SynMOF on overlapping papers; a cost and latency table for commercial versus open-weight models.</li>
+      <li><strong>Qualitative:</strong> A failure-mode taxonomy (hallucinated values, unit errors, missed coreferences, schema violations) and per-field guidance on which prompting strategy to trust.</li>
+      <li><strong>Artefact:</strong> A populated, provenance-aware Neo4j MOF synthesis KG (target: 5,000+ entities, 25,000+ relations), queryable via a Streamlit dashboard that translates natural-language questions to Cypher.</li>
+      <li><strong>Deliverables:</strong> (1) reproducible Docker-packaged repository; (2) KG dump, ontology, and gold standard; (3) evaluation report with full metrics and error analysis; (4) final written report and defence slides.</li>
+    </ul>
+    <p><strong>Outlook:</strong> A validated extraction pipeline turns literature into data: the KG can feed synthesis-prediction models (Luo et al., 2022) and graph-based property models such as MOFGalaxyNet (Jalali et al., 2023), and the framework extends naturally to covalent organic frameworks, a direct path to follow-on thesis work.</p>
+  </section>
+
+</div>
+
+<!-- ===================== REFERENCES ===================== -->
+<div class="sheet refs" data-screen-label="References">
+  <div class="refs-head">References</div>
+
+  <p>Bai, X., He, S., Li, Y., et al. (2025). <i>Construction of a Knowledge Graph for Framework Material Enabled by Large Language Models and Its Application.</i> npj Computational Materials, 11, 51. <a href="https://doi.org/10.1038/s41524-025-01540-6">https://doi.org/10.1038/s41524-025-01540-6</a></p>
+
+  <p>Dagdelen, J., Dunn, A., Lee, S., et al. (2024). <i>Structured Information Extraction from Scientific Text with Large Language Models.</i> Nature Communications, 15, 1418. <a href="https://doi.org/10.1038/s41467-024-45563-x">https://doi.org/10.1038/s41467-024-45563-x</a></p>
+
+  <p>Edge, D., Trinh, H., Cheng, N., et al. (2024). <i>From Local to Global: A GraphRAG Approach to Query-Focused Summarization.</i> arXiv:2404.16130. <a href="https://arxiv.org/abs/2404.16130">https://arxiv.org/abs/2404.16130</a></p>
+
+  <p>Glasby, L. T., Gubsch, K., Bence, R., et al. (2023). <i>DigiMOF: A Database of Metal&ndash;Organic Framework Synthesis Information Generated via Text Mining.</i> Chemistry of Materials, 35(11), 4510&ndash;4524. <a href="https://doi.org/10.1021/acs.chemmater.3c00788">https://doi.org/10.1021/acs.chemmater.3c00788</a></p>
+
+  <p>Gupta, T., Zaki, M., Krishnan, N. M. A., &amp; Mausam. (2022). <i>MatSciBERT: A Materials Domain Language Model for Text Mining and Information Extraction.</i> npj Computational Materials, 8, 102. <a href="https://doi.org/10.1038/s41524-022-00784-w">https://doi.org/10.1038/s41524-022-00784-w</a></p>
+
+  <p>Jalali, M., Wonanke, A. D. D., &amp; W&ouml;ll, C. (2023). <i>MOFGalaxyNet: A Social Network Analysis for Predicting Guest Accessibility in Metal&ndash;Organic Frameworks Utilizing Graph Convolutional Networks.</i> Journal of Cheminformatics, 15, 94. <a href="https://doi.org/10.1186/s13321-023-00764-2">https://doi.org/10.1186/s13321-023-00764-2</a></p>
+
+  <p>Lin, Z., Ren, D., Ran, K., et al. (2025). <i>Reshaping MOFs Text Mining with a Dynamic Multi-Agent Framework of Large Language Models.</i> arXiv:2504.18880. <a href="https://arxiv.org/abs/2504.18880">https://arxiv.org/abs/2504.18880</a></p>
+
+  <p>Luo, Y., Bag, S., Zaremba, O., et al. (2022). <i>MOF Synthesis Prediction Enabled by Automatic Data Mining and Machine Learning.</i> Angewandte Chemie International Edition, 61, e202200242. <a href="https://doi.org/10.1002/anie.202200242">https://doi.org/10.1002/anie.202200242</a></p>
+
+  <p>Pan, S., Luo, L., Wang, Y., Chen, C., Wang, J., &amp; Wu, X. (2024). <i>Unifying Large Language Models and Knowledge Graphs: A Roadmap.</i> IEEE Transactions on Knowledge and Data Engineering, 36(7), 3580&ndash;3599. <a href="https://doi.org/10.1109/TKDE.2024.3352100">https://doi.org/10.1109/TKDE.2024.3352100</a></p>
+
+  <p>Polak, M. P., &amp; Morgan, D. (2024). <i>Extracting Accurate Materials Data from Research Papers with Conversational Language Models and Prompt Engineering.</i> Nature Communications, 15, 1569. <a href="https://doi.org/10.1038/s41467-024-45914-8">https://doi.org/10.1038/s41467-024-45914-8</a></p>
+
+  <p>Shi, L., Liu, Z., Yang, Y., et al. (2024). <i>LLM-Based MOFs Synthesis Condition Extraction Using Few-Shot Demonstrations.</i> arXiv:2408.04665. <a href="https://arxiv.org/abs/2408.04665">https://arxiv.org/abs/2408.04665</a></p>
+
+  <p>Swain, M. C., &amp; Cole, J. M. (2016). <i>ChemDataExtractor: A Toolkit for Automated Extraction of Chemical Information from the Scientific Literature.</i> Journal of Chemical Information and Modeling, 56(10), 1894&ndash;1904. <a href="https://doi.org/10.1021/acs.jcim.6b00207">https://doi.org/10.1021/acs.jcim.6b00207</a></p>
+
+  <p>Zheng, Z., Zhang, O., Borgs, C., Chayes, J. T., &amp; Yaghi, O. M. (2023). <i>ChatGPT Chemistry Assistant for Text Mining and the Prediction of MOF Synthesis.</i> Journal of the American Chemical Society, 145(32), 18048&ndash;18062. <a href="https://doi.org/10.1021/jacs.3c05819">https://doi.org/10.1021/jacs.3c05819</a></p>
+</div>
+
+</body>
+</html>

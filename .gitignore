@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# Project-specific
+.env
+.env.*
+!.env.example
+# personal scratchpad, never committed (repo will be public)
+MY_NOTES.md
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+llm_cache/
+*.log
+
+# Outputs (large)
+*.pdf
+*.docx
+!docs/*.docx
+!docs/*.pdf
+neo4j_data/
+neo4j_logs/
+
+# Office lock files (win over the docs/ un-ignore rules above)
+~$*
+
+# OS
+Thumbs.db

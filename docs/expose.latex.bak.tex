@@ -1,0 +1,198 @@
+% Case Study 2 Expose -- Building and Validating a MOF Synthesis Knowledge Graph with LLMs
+% Author: Devendra Singh Dhakad (Matriculation 100004684), M.Sc. Data Science and AI, SRH Heidelberg
+% Compile with Tectonic (XeTeX engine):  tectonic docs/expose.tex
+% Design notes: SRH-orange accents, bundled Lato font, clickable hyperref links.
+% STYLE RULE: no em dashes anywhere. En dashes (--) only for ranges and "metal--organic".
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{fontspec}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage[table]{xcolor}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{parskip}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xurl}  % allow long DOIs/URLs to break across lines
+\urlstyle{same}    % render \url in body font (Lato), not monospace
+
+% ==== Brand colours ====
+\definecolor{srhorange}{HTML}{E64415}
+\definecolor{linkblue}{HTML}{0563C1}
+\definecolor{rulegray}{HTML}{BFBFBF}
+
+\hypersetup{
+  colorlinks=true,
+  urlcolor=linkblue,
+  linkcolor=linkblue,
+  pdftitle={Case Study 2 Expose -- MOF Synthesis Knowledge Graph with LLMs},
+  pdfauthor={Devendra Singh Dhakad},
+}
+
+% ==== Fonts (bundled Lato, OFL) ====
+\setmainfont{Lato}[
+  Path = assets/fonts/,
+  Extension = .ttf,
+  UprightFont = *-Regular,
+  BoldFont = *-Bold,
+  ItalicFont = *-Italic,
+  BoldItalicFont = *-BoldItalic,
+]
+
+% ==== Section headings to match the SRH sample ====
+\titleformat{\section}
+  {\large\bfseries}
+  {\textcolor{srhorange}{\thesection.}}{0.5em}{}
+\titlespacing*{\section}{0pt}{1.0ex}{0.6ex}
+
+% Thin SRH-orange rule used between sections
+\newcommand{\srhrule}{\vspace{0.4ex}\noindent\textcolor{srhorange}{\rule{\linewidth}{0.4pt}}\vspace{0.6ex}}
+
+% Tight list defaults
+\setlist[itemize]{leftmargin=1.4em,topsep=2pt,itemsep=2pt,parsep=0pt}
+\setlist[enumerate]{leftmargin=1.6em,topsep=2pt,itemsep=2pt,parsep=0pt}
+
+\setlength{\parskip}{0.6ex}
+\renewcommand{\arraystretch}{1.25}
+
+% Reference entry: hanging indent, clickable URL
+\newcommand{\refentry}[1]{\par\hangindent=1.2em\hangafter=1 #1\par\vspace{0.5ex}}
+
+\begin{document}
+\pagestyle{empty}
+
+% ===== Title block =======================================================
+\begin{center}
+  \includegraphics[width=3.1cm]{assets/srh_logo.jpg}\\[1.1em]
+  {\bfseries Case Study 2}\\[0.3em]
+  {\LARGE\bfseries Expos\'e}\\[1.4em]
+  Devendra Singh Dhakad \quad\textbullet\quad Matriculation No. 100004684\\[0.2em]
+  M.Sc. Data Science and Artificial Intelligence\\[0.2em]
+  Supervisor: Prof.\ Dr.\ Mehrdad Jalali\\[0.2em]
+  SRH University of Applied Sciences Heidelberg\\[0.2em]
+  11 June 2026
+\end{center}
+\srhrule
+
+% ===== 1. Working Title ==================================================
+\section{Working Title}
+\textbf{``Building and Validating a Metal--Organic Framework Synthesis Knowledge Graph with Large Language Models''}
+\srhrule
+
+% ===== 2. Introduction & Relevance =======================================
+\section{Introduction \& Relevance}
+Metal--organic frameworks (MOFs) are among the most intensively studied porous crystalline materials, with over 100{,}000 synthesised structures recorded in the Cambridge Structural Database and applications spanning CO\textsubscript{2} capture, gas storage and separation, catalysis, sensing, and drug delivery. Yet the practical knowledge of how a MOF is made (precursor, linker, solvent, method, temperature, time) remains locked in the prose of tens of thousands of publications, so synthesis planning still relies heavily on expert intuition and trial and error.
+
+Large Language Models (LLMs) and Knowledge Graphs (KGs) offer a path to convert this text into a structured, queryable resource (Pan et al., 2024), and recent work demonstrates the approach at scale: Bai et al.\ (2025) built a 2.5-million-node knowledge graph for framework materials from over 100{,}000 articles. What remains under-quantified is reliability: how accurate are LLM-extracted synthesis records field by field, how do they compare with established text-mined databases and domain baselines, and what do open-weight models deliver relative to commercial APIs, at what cost?
+
+This project builds and, crucially, validates a MOF synthesis knowledge graph. An end-to-end pipeline extracts complete synthesis records (precursors, linkers, solvents, methods, conditions, properties, applications) from open-access MOF literature into a Neo4j graph with full provenance. Extraction quality is validated against a hand-annotated gold standard, cross-checked against the DigiMOF (Glasby et al., 2023) and SynMOF (Luo et al., 2022) databases, and benchmarked against ChemDataExtractor and MatSciBERT. The outcome is a reproducible validation framework for LLM-based scientific extraction plus a practical artefact: a queryable, provenance-aware MOF synthesis KG that can feed downstream graph-based materials research (Jalali et al., 2023).
+\srhrule
+
+% ===== 3. Research Question & Objectives =================================
+\section{Research Question \& Objectives}
+\textbf{Main Question:}
+\begin{itemize}
+  \item How accurately and reliably can Large Language Models extract complete MOF synthesis records (precursor, linker, solvent, method, conditions) from the scientific literature, measured against expert annotation, established text-mined databases (DigiMOF, SynMOF), and domain-specific baselines?
+\end{itemize}
+
+\textbf{Sub-questions:}
+\begin{enumerate}
+  \item Which prompting strategy (zero-shot, few-shot, schema-guided, chain-of-thought) is most reliable for each field of a synthesis record?
+  \item Where and why do LLM extractions disagree with DigiMOF and SynMOF, and which source is correct when they do?
+  \item How do open-weight models (Llama-3) compare to commercial APIs (GPT-4o, Claude) on per-field accuracy, cost, and latency?
+  \item Can the resulting KG answer cross-paper aggregation queries (e.g., dominant solvent--temperature combinations per linker family) and, as a stretch goal, support KG-grounded question answering?
+\end{enumerate}
+
+\textbf{Objectives:}
+\begin{itemize}
+  \item Finalise the MOF synthesis ontology (v0.2 drafted: eight entity types plus mandatory provenance) with supervisor input.
+  \item Assemble 300--500 open-access MOF synthesis papers via the CSD MOF subset, the DigiMOF article index, ChemRxiv, and PubMed Central OA.
+  \item Implement a unified extraction interface spanning LLM strategies and baselines (ChemDataExtractor 2.0, MatSciBERT).
+  \item Hand-annotate 150--200 synthesis paragraphs in Label Studio and define the field mapping for the DigiMOF/SynMOF agreement analysis.
+  \item Construct a Neo4j KG with chemical-name entity resolution and a Streamlit dashboard with natural-language-to-Cypher querying.
+\end{itemize}
+\srhrule
+
+% ===== 4. State of the Art ===============================================
+\section{State of the Art}
+Automated extraction of MOF knowledge from text has developed along several strands:
+\begin{itemize}
+  \item \textbf{Rule-based MOF text mining:} ChemDataExtractor (Swain \& Cole, 2016) established schema-driven chemical extraction and powers this project's two reference databases: DigiMOF (Glasby et al., 2023; 15{,}501 MOFs, 52{,}680 synthesis-property records) and SynMOF (Luo et al., 2022). Rule-based extraction is precise but rigid: free-text conditions, unit variants, and implicit references are frequently missed.
+  \item \textbf{Domain-specific language models:} MatSciBERT (Gupta et al., 2022) showed that domain pre-training substantially improves materials NER over general BERT, but such models need labelled training data and stop at entity level rather than complete synthesis records.
+  \item \textbf{LLM-based extraction in chemistry:} Zheng et al.\ (2023) mined MOF synthesis parameters with ChatGPT across 228 articles; Dagdelen et al.\ (2024) and Polak \& Morgan (2024) generalised LLM extraction of structured scientific records; Shi et al.\ (2024) improved MOF synthesis-condition extraction with few-shot demonstrations; Lin et al.\ (2025) proposed a multi-agent extraction framework. These studies rely almost exclusively on commercial GPT models and validate against small in-house test sets.
+  \item \textbf{LLM-constructed knowledge graphs:} Pan et al.\ (2024) chart the LLM--KG integration agenda; Bai et al.\ (2025) realised it for framework materials at scale, including KG-grounded question answering, and GraphRAG (Edge et al., 2024) shows the broader value of graph-grounded retrieval. Scale is demonstrated; per-field extraction validity is not the focus.
+  \item \textbf{Graph machine learning on MOF data:} MOFGalaxyNet (Jalali et al., 2023) represents the MOF landscape as a network and predicts properties with graph convolutional networks, exemplifying the downstream applications that depend on reliable structured MOF data.
+\end{itemize}
+\textbf{\textit{Gap:}} \textit{No published study rigorously validates LLM-extracted MOF synthesis records field by field against both expert annotation and the established text-mined databases, and none quantifies the accuracy, cost, and latency trade-off of open-weight versus commercial models for this task. This project closes that gap and delivers the validated, provenance-aware knowledge graph that prior work presupposes.}
+\srhrule
+
+% ===== 5. Methodology ====================================================
+\section{Methodology}
+\noindent\begin{tabularx}{\linewidth}{@{}p{3.0cm}XX@{}}
+\textbf{Phase} & \textbf{Method \& Tools} & \textbf{Sample \& Outputs}\\
+\arrayrulecolor{rulegray}\midrule
+\textbf{1. Corpus Collection} & Python; DOI lists from the CSD MOF subset and the DigiMOF article index; ChemRxiv and PubMed Central OA harvesting; GROBID / PyMuPDF for PDF parsing & 300--500 open-access MOF synthesis papers; cleaned plain text plus metadata\\
+\textbf{2. Schema \& Annotation} & JSON-Schema MOF ontology v0.2; manual annotation in Label Studio; field mapping to DigiMOF/SynMOF & Ontology spec; 150--200 hand-annotated synthesis paragraphs as gold standard; agreement-analysis protocol\\
+\textbf{3. Extraction Pipelines} & LLM strand: LangChain/LlamaIndex with GPT-4o, Claude, Llama-3 (Ollama) under zero-shot, few-shot, schema-guided, and chain-of-thought prompting. Baselines: ChemDataExtractor 2.0, MatSciBERT. & Unified Extractor interface producing (subject, relation, object, provenance, confidence) records in an identical schema across all approaches\\
+\textbf{4. KG Construction} & Neo4j (Docker); SBERT-based entity resolution with chemical-name normalisation; Cypher schema with provenance edges & Populated MOF synthesis KG (target: 5{,}000+ entities, 25{,}000+ relations) with full provenance\\
+\textbf{5. Validation \& Dashboard} & Per-field precision/recall/F1 vs.\ gold standard; agreement analysis on papers shared with DigiMOF/SynMOF; cost and latency profiling; Streamlit dashboard with NL-to-Cypher & Evaluation report; interactive dashboard; stretch goal: KG-RAG vs.\ vanilla-RAG question answering\\
+\bottomrule
+\end{tabularx}
+
+\vspace{0.6ex}
+\noindent\textbf{Ethics \& Reproducibility:} Only open-access publications under permissive licences are processed. All code, prompts, the ontology, the gold standard, and the field mappings will be released in a public Git repository; the pipeline is containerised with Docker for one-command reproducibility, and all LLM calls are cached and logged so experiments can be replayed without re-incurring inference cost.
+\srhrule
+
+% ===== 6. Work Plan & Timeline ===========================================
+\section{Work Plan \& Timeline}
+The project runs for 12 weeks (22 June 2026 -- 15 September 2026).
+
+\noindent\begin{tabularx}{\linewidth}{@{}p{1.8cm}X@{}}
+\textbf{Week(s)} & \textbf{Task}\\
+\arrayrulecolor{rulegray}\midrule
+1--2 & Literature deep dive; finalise MOF ontology with supervisor; assemble corpus DOI lists\\
+3 & PDF parsing pipeline; cleaned corpus; exploratory analysis of synthesis-paragraph coverage\\
+4--5 & Implement LLM extraction pipelines (zero-shot, few-shot, schema-guided, CoT); implement baselines\\
+6 & Hand-annotate gold standard; freeze evaluation protocol and DigiMOF/SynMOF field mapping\\
+7 & Set up Neo4j; KG ingestion; entity resolution and chemical-name normalisation\\
+8 & Run all extractors at scale; populate full KG; compute per-field metrics\\
+9 & Agreement analysis vs.\ DigiMOF/SynMOF; error taxonomy; cost/latency comparison; ablations\\
+10 & Streamlit dashboard with NL-to-Cypher and provenance views; stretch: KG-RAG QA\\
+11 & End-to-end reproducibility (fresh Docker build); supervisor feedback round; polish\\
+12 & Finalise report, code repository, and presentation slides\\
+\bottomrule
+\end{tabularx}
+\srhrule
+
+% ===== 7. Expected Results & Outlook =====================================
+\section{Expected Results \& Outlook}
+\begin{itemize}
+  \item \textbf{Quantitative:} Per-field precision/recall/F1 for every extractor and prompting combination (target F1 $\geq$ 0.80 on well-defined fields such as precursor, linker, solvent; honest reporting on harder fields such as process conditions); agreement rates with DigiMOF/SynMOF on overlapping papers; a cost and latency table for commercial versus open-weight models.
+  \item \textbf{Qualitative:} A failure-mode taxonomy (hallucinated values, unit errors, missed coreferences, schema violations) and per-field guidance on which prompting strategy to trust.
+  \item \textbf{Artefact:} A populated, provenance-aware Neo4j MOF synthesis KG (target: 5{,}000+ entities, 25{,}000+ relations), queryable via a Streamlit dashboard that translates natural-language questions to Cypher.
+  \item \textbf{Deliverables:} (1) reproducible Docker-packaged repository; (2) KG dump, ontology, and gold standard; (3) evaluation report with full metrics and error analysis; (4) final written report and defence slides.
+\end{itemize}
+\noindent\textbf{Outlook:} A validated extraction pipeline turns literature into data: the KG can feed synthesis-prediction models (Luo et al., 2022) and graph-based property models such as MOFGalaxyNet (Jalali et al., 2023), and the framework extends naturally to covalent organic frameworks, a direct path to follow-on thesis work.
+\srhrule
+
+% ===== References ========================================================
+\section*{\textcolor{srhorange}{REFERENCES}}
+\small
+\refentry{Bai, X., He, S., Li, Y., et al.\ (2025). \textit{Construction of a Knowledge Graph for Framework Material Enabled by Large Language Models and Its Application}. npj Computational Materials, 11, 51. \url{https://doi.org/10.1038/s41524-025-01540-6}}
+\refentry{Dagdelen, J., Dunn, A., Lee, S., et al.\ (2024). \textit{Structured Information Extraction from Scientific Text with Large Language Models}. Nature Communications, 15, 1418. \url{https://doi.org/10.1038/s41467-024-45563-x}}
+\refentry{Edge, D., Trinh, H., Cheng, N., et al.\ (2024). \textit{From Local to Global: A GraphRAG Approach to Query-Focused Summarization}. arXiv:2404.16130. \url{https://arxiv.org/abs/2404.16130}}
+\refentry{Glasby, L. T., Gubsch, K., Bence, R., et al.\ (2023). \textit{DigiMOF: A Database of Metal--Organic Framework Synthesis Information Generated via Text Mining}. Chemistry of Materials, 35(11), 4510--4524. \url{https://doi.org/10.1021/acs.chemmater.3c00788}}
+\refentry{Gupta, T., Zaki, M., Krishnan, N. M. A., \& Mausam. (2022). \textit{MatSciBERT: A Materials Domain Language Model for Text Mining and Information Extraction}. npj Computational Materials, 8, 102. \url{https://doi.org/10.1038/s41524-022-00784-w}}
+\refentry{Jalali, M., Wonanke, A. D. D., \& W\"oll, C. (2023). \textit{MOFGalaxyNet: A Social Network Analysis for Predicting Guest Accessibility in Metal--Organic Frameworks Utilizing Graph Convolutional Networks}. Journal of Cheminformatics, 15, 94. \url{https://doi.org/10.1186/s13321-023-00764-2}}
+\refentry{Lin, Z., Ren, D., Ran, K., et al.\ (2025). \textit{Reshaping MOFs Text Mining with a Dynamic Multi-Agent Framework of Large Language Models}. arXiv:2504.18880. \url{https://arxiv.org/abs/2504.18880}}
+\refentry{Luo, Y., Bag, S., Zaremba, O., et al.\ (2022). \textit{MOF Synthesis Prediction Enabled by Automatic Data Mining and Machine Learning}. Angewandte Chemie International Edition, 61, e202200242. \url{https://doi.org/10.1002/anie.202200242}}
+\refentry{Pan, S., Luo, L., Wang, Y., Chen, C., Wang, J., \& Wu, X. (2024). \textit{Unifying Large Language Models and Knowledge Graphs: A Roadmap}. IEEE Transactions on Knowledge and Data Engineering, 36(7), 3580--3599. \url{https://doi.org/10.1109/TKDE.2024.3352100}}
+\refentry{Polak, M. P., \& Morgan, D. (2024). \textit{Extracting Accurate Materials Data from Research Papers with Conversational Language Models and Prompt Engineering}. Nature Communications, 15, 1569. \url{https://doi.org/10.1038/s41467-024-45914-8}}
+\refentry{Shi, L., Liu, Z., Yang, Y., et al.\ (2024). \textit{LLM-Based MOFs Synthesis Condition Extraction Using Few-Shot Demonstrations}. arXiv:2408.04665. \url{https://arxiv.org/abs/2408.04665}}
+\refentry{Swain, M. C., \& Cole, J. M. (2016). \textit{ChemDataExtractor: A Toolkit for Automated Extraction of Chemical Information from the Scientific Literature}. Journal of Chemical Information and Modeling, 56(10), 1894--1904. \url{https://doi.org/10.1021/acs.jcim.6b00207}}
+\refentry{Zheng, Z., Zhang, O., Borgs, C., Chayes, J. T., \& Yaghi, O. M. (2023). \textit{ChatGPT Chemistry Assistant for Text Mining and the Prediction of MOF Synthesis}. Journal of the American Chemical Society, 145(32), 18048--18062. \url{https://doi.org/10.1021/jacs.3c05819}}
+
+\end{document}

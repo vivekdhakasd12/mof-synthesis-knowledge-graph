@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MOF Synthesis Knowledge Graph Ontology v0.2",
+  "description": "MOF-specific ontology for LLM-driven synthesis-record extraction, replacing the generic materials v0.1 after the 2026-06-10 project re-aim. Field names chosen to align with DigiMOF/SynMOF for the agreement analysis. Pending supervisor review before the annotation phase.",
+  "entities": {
+    "MOF": {
+      "description": "A metal-organic framework material. Includes common names, chemical formulas, and CSD refcodes.",
+      "examples": ["HKUST-1", "ZIF-8", "UiO-66", "MOF-5", "MIL-101(Cr)"],
+      "attributes": ["name", "formula", "csd_refcode", "topology", "aliases"]
+    },
+    "MetalPrecursor": {
+      "description": "The metal salt or source compound supplying the metal node/cluster.",
+      "examples": ["Zn(NO3)2·6H2O", "Cu(NO3)2·3H2O", "ZrCl4", "FeCl3·6H2O"],
+      "attributes": ["name", "formula", "metal", "amount"]
+    },
+    "OrganicLinker": {
+      "description": "The organic ligand connecting metal nodes.",
+      "examples": ["terephthalic acid (H2BDC)", "trimesic acid (H3BTC)", "2-methylimidazole (HmIM)", "fumaric acid"],
+      "attributes": ["name", "formula", "abbreviation", "amount"]
+    },
+    "Solvent": {
+      "description": "Solvent or solvent mixture used in the synthesis.",
+      "examples": ["DMF", "water", "ethanol", "DEF", "DMF/H2O (3:1)"],
+      "attributes": ["name", "ratio", "volume"]
+    },
+    "SynthesisMethod": {
+      "description": "The synthesis route used to prepare the MOF.",
+      "examples": ["solvothermal", "hydrothermal", "microwave-assisted", "mechanochemical", "electrochemical", "room-temperature stirring"],
+      "attributes": ["name", "process_type"]
+    },
+    "Condition": {
+      "description": "A process or measurement condition (temperature, time, pressure, pH, atmosphere).",
+      "examples": ["120 °C", "24 h", "1 bar", "pH 10", "N2 atmosphere"],
+      "attributes": ["type", "value", "unit"]
+    },
+    "Property": {
+      "description": "A measured property of the MOF.",
+      "examples": ["BET surface area", "pore volume", "pore diameter", "CO2 uptake", "thermal stability"],
+      "attributes": ["name", "value", "unit", "measurement_technique"]
+    },
+    "Application": {
+      "description": "A stated or demonstrated use case for the MOF.",
+      "examples": ["CO2 capture", "gas separation", "heterogeneous catalysis", "drug delivery", "water harvesting", "chemical sensing"],
+      "attributes": ["name", "domain"]
+    },
+    "Paper": {
+      "description": "Source publication for provenance.",
+      "attributes": ["doi", "title", "authors", "year", "journal", "url"]
+    }
+  },
+  "relations": {
+    "USES_PRECURSOR": { "from": "MOF", "to": "MetalPrecursor" },
+    "USES_LINKER": { "from": "MOF", "to": "OrganicLinker" },
+    "SYNTHESIZED_BY": { "from": "MOF", "to": "SynthesisMethod" },
+    "IN_SOLVENT": { "from": "SynthesisMethod", "to": "Solvent" },
+    "AT_CONDITION": { "from": "SynthesisMethod", "to": "Condition" },
+    "HAS_PROPERTY": { "from": "MOF", "to": "Property" },
+    "MEASURED_AT": { "from": "Property", "to": "Condition" },
+    "USED_IN": { "from": "MOF", "to": "Application" },
+    "MENTIONED_IN": { "from": "*", "to": "Paper", "required": true, "note": "Provenance edge - every entity must point to its source paper(s) and section." }
+  },
+  "provenance_required": true,
+  "open_questions": [
+    "Property values as nodes (cross-paper aggregation) or attributes on HAS_PROPERTY edges?",
+    "Confidence score: per-triple float vs. LLM-self-reported categorical (high/med/low)?",
+    "Condition granularity: one typed Condition entity vs. separate Temperature/Time/pH entities?",
+    "Which fields map 1:1 onto DigiMOF/SynMOF schemas for the agreement analysis (metal, linker, solvent, temperature, time)?",
+    "Add Characterization technique (PXRD, BET, TGA) as a first-class entity in v0.3, or keep as Property.measurement_technique attribute?"
+  ]
+}
