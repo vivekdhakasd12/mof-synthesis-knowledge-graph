@@ -2,6 +2,35 @@
 
 A rolling log. Append a new dated entry every working session. Newest at the top.
 
+## 2026-07-06 (session 5) — Exposé approved + uploaded; 2-week slip; re-baselined schedule; ontology v0.2 alignment; first commits
+
+**Status:** Pre-project phase closed: Prof. Jalali approved the exposé (user reported approval on 2026-06-21, no verbatim quote on file) and the user uploaded it to Moodle on 2026-06-21, meeting the hard deadline. However, no project work happened between the official start (2026-06-22) and 2026-07-05: roughly 2 of 12 weeks lost. The plan is re-baselined to a 10-week run (2026-07-06 to 2026-09-15) with a defined cut order protecting the validation core. Week 0 Day 1 tasks are done; the repo now has its first commits and a v0.2-aligned type system, so extractor work is unblocked.
+
+Done in this session:
+- Re-baselined 10-week schedule agreed (Week 0 catch-up 2026-07-06 to 2026-07-12, then corpus, pipelines, gold standard freeze 2026-08-07, KG, scale run, validation, dashboard/report, repro, submit 2026-09-15). Cut order if slipping: KG-RAG QA, then NL-to-Cypher (canned Cypher instead), then ablations, then corpus 500 to 300 / annotation 200 to 150. Rationale: the per-field validation plus DigiMOF/SynMOF agreement is the graded contribution; stretch goals go first.
+- Schedule written to Apple Calendar: new local "Case Study 2" calendar on the user's Mac, 22 all-day events (day-level tasks for Week 0, Monday kickoffs per week, 3 checkpoints, gold-freeze milestone, final deadline). Note: local calendar, does not sync to phone.
+- First git commit `a8b3887`: full scaffold, exposé, docs (51 files). Second commit `a98dff9`: ontology alignment (below). Added Office lock-file rule to `.gitignore` (docs/~$expose.docx was about to be committed).
+- **Ontology v0.2 alignment done** (was the blocking Week 1 task from session 3): `src/extraction/extractor_base.py` EntityType/RelationType Literals now mirror `configs/ontology.json` v0.2 (9 entities, 9 relations); `configs/prompts/extraction_schema_guided.txt` rewritten from v0.1 generic-materials to v0.2 MOF vocabulary with per-relation endpoint constraints (Paper/MENTIONED_IN deliberately excluded: provenance is pipeline-attached, not LLM-extracted).
+- Tests grown 1 to 6 (all passing, 100% coverage on extractor_base): drift guards both directions for entities and relations, relation endpoint validity, provenance invariant lock (provenance_required, MENTIONED_IN required to Paper), prompt-template completeness check, plus the roundtrip test re-typed to a MOF example.
+- Multi-agent diff review before commit: 4 findings, 3 confirmed and fixed (off-by-one span in test fixture, stale v0.1 prompt template, unlocked provenance invariant), 1 rejected (runtime type validation: deferred to the first extractor by design, a raising constructor would conflict with the extract-must-not-raise contract).
+- Environment repaired: `uv sync` was broken (blis, a spaCy dependency, has no Python 3.13 wheels; old .venv was bare). Pinned Python 3.11 via `.python-version`, rebuilt venv, full dependency set installs cleanly; pytest, ruff, mypy all green.
+- `pyproject.toml`: scaffold author "Abhi" resurfaced and is fixed to Devendra Singh Dhakad (CLAUDE.md rule); description updated to the MOF re-aim.
+
+Next (deadline order):
+1. **2026-07-07:** re-aim `docs/claude_code_prompt.md` to the MOF framing; confirm OpenAI/Anthropic API keys and LLM budget.
+2. **2026-07-08:** email ontology v0.2 to mehrdad.jalali@srh.de for sign-off (blocks annotation); confirm SynMOF licence (github.com/aimat-lab/MOF_Synthesis_Prediction).
+3. **2026-07-09 to 2026-07-12:** literature deep dive (P0 to P3 from `docs/literature_review.md`); start corpus DOI lists; Week 0 wrap + PROGRESS.md update on 2026-07-12.
+4. **2026-07-13 to 2026-07-17:** Week 1 corpus collection + parsing; checkpoint 2026-07-17: 300-500 papers or cut to 300.
+5. **2026-09-15:** hard submission deadline (report, repo, slides).
+
+Open items / risks:
+- New: 10-week plan has no slack; if a week slips and cannot be recovered, tell Jalali in August, not September (renegotiate scope early).
+- New: git commits are authored as "vivekdhakasd12 <dhakadvivu5@gmail.com>"; decide before the repo goes public whether commits should carry the real student name.
+- New: project schedule lives only in the local Mac calendar; recreate on Google calendar if phone reminders are needed.
+- Carried: SynMOF licence/availability unconfirmed (exposé words it as "where accessible").
+- Carried: LLM budget (commercial vs open-weight mix) and API key access unconfirmed; becomes blocking in Week 2 (2026-07-20).
+- Carried: MOF-only corpus collection slightly harder than broad scrape; mitigations are the DigiMOF article index and CoRE MOF DOI lists (Chung 2019).
+
 ## 2026-06-11 (session 4) — Exposé visual design finalised; project infra (skills, CLAUDE.md, rules)
 
 **Status:** Content of the exposé is frozen and unchanged from session 3 (same MOF framing, same 13 verified references). This session was about the *look* and the project's working infrastructure. Exposé is ready to send; next action is still the user emailing it to Jalali and uploading to Moodle by 21 June.
