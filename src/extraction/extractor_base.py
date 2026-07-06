@@ -2,15 +2,39 @@
 
 Every extractor (LLM, ChemDataExtractor, MatSciBERT) returns the same Triple shape
 so they can be evaluated against a common gold standard.
+
+The type Literals below mirror configs/ontology.json (v0.2, MOF-specific), which is
+the source of truth; tests/test_extractor_base.py enforces the match.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Literal
 
-EntityType = Literal["Material", "SynthesisMethod", "Property", "Application"]
-RelationType = Literal["SYNTHESIZED_BY", "HAS_PROPERTY", "USED_IN"]
+EntityType = Literal[
+    "MOF",
+    "MetalPrecursor",
+    "OrganicLinker",
+    "Solvent",
+    "SynthesisMethod",
+    "Condition",
+    "Property",
+    "Application",
+    "Paper",
+]
+RelationType = Literal[
+    "USES_PRECURSOR",
+    "USES_LINKER",
+    "SYNTHESIZED_BY",
+    "IN_SOLVENT",
+    "AT_CONDITION",
+    "HAS_PROPERTY",
+    "MEASURED_AT",
+    "USED_IN",
+    "MENTIONED_IN",
+]
 Confidence = Literal["high", "medium", "low"]
 
 
@@ -34,9 +58,17 @@ class Triple:
 
     def to_dict(self) -> dict:
         return {
-            "subject": {"type": self.subject.type, "name": self.subject.name, "span": self.subject.span},
+            "subject": {
+                "type": self.subject.type,
+                "name": self.subject.name,
+                "span": self.subject.span,
+            },
             "relation": self.relation,
-            "object": {"type": self.object.type, "name": self.object.name, "span": self.object.span},
+            "object": {
+                "type": self.object.type,
+                "name": self.object.name,
+                "span": self.object.span,
+            },
             "evidence": self.evidence,
             "confidence": self.confidence,
             "source_paper_id": self.source_paper_id,
