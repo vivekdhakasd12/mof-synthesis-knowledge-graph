@@ -2,6 +2,34 @@
 
 A rolling log. Append a new dated entry every working session. Newest at the top.
 
+## 2026-07-07 (session 6) — Day-1 prompt re-aimed to MOF framing; API-key status checked; LLM budget planned
+
+**Status:** Week 0 Day 2 tasks done. `docs/claude_code_prompt.md` now matches the approved exposé and the re-baselined schedule (commit `933e4d1`). API keys do NOT exist yet on this machine (no .env, no env vars, Ollama not installed); a gitignored `.env` scaffold is in place waiting for keys. The LLM budget is planned with verified July-2026 pricing and a free-first strategy; the funding question goes to Jalali in the 2026-07-08 ontology email.
+
+Done in this session:
+- `docs/claude_code_prompt.md` rewritten from the superseded broad-materials framing to the MOF synthesis KG framing: exposé RQs, locked stack, 10-week re-baselined phase table with cut order, non-negotiable domain rules, First Action now starts from PROGRESS.md + the project calendar instead of an empty repo. Zero em dashes. Committed as `933e4d1`.
+- API-key audit: no `.env`, no `OPENAI_API_KEY`/`ANTHROPIC_API_KEY` in the environment, Ollama not installed. Created `.env` from the example with a generated Neo4j password (confirmed gitignored); key fields empty, user must create accounts and paste keys.
+- Hardware check for the open-weight strand: Apple M1, 8 GB RAM, 51 GB free disk. Llama-3 8B quantized via Ollama is feasible but slow (full 6,000-call grid is a multi-night overnight job; do not run Neo4j concurrently). Ollama install + ~5 GB model pull scheduled with Week 3 (2026-07-27).
+- LLM budget planned with pricing verified live this session (claude-api skill + web): GPT-4o $2.50/$10 per MTok, Claude Sonnet 5 $2/$10 intro through 2026-08-31 (then $3/$15), both providers 50% off via batch APIs. Workload model: ~1,500 passages x 4 strategies = 6,000 calls/model at ~1,500 in / 400 out tokens.
+- **Budget decision (user asked for free options; no preference on mix):** GPT-4o + Claude Sonnet 5 + local Llama-3 8B. Free-first: develop on free tiers (GitHub Models GPT-4o ~50 req/day; Groq Llama-3.3-70B 1,000 req/day) and the mandatory call cache; pay only for batched final scale runs, ~$66/~EUR 61 for both commercial models (EUR ~45 at 300 papers). Ceiling EUR 70; target EUR 0 personal by asking Jalali/SRH to cover it. Rationale: free tiers cannot serve the 6,000-call study runs (rate limits, reproducibility), and dropping the commercial strand would contradict the approved exposé (RQ4).
+
+Next (deadline order):
+1. **2026-07-08:** draft ontology v0.2 sign-off email to mehrdad.jalali@srh.de (short, he writes one-liners) INCLUDING the ~EUR 60 API-funding question; user sends. Confirm SynMOF licence (github.com/aimat-lab/MOF_Synthesis_Prediction).
+2. **2026-07-08:** user creates OpenAI + Anthropic API accounts and pastes keys into `.env` (blocking for Week 2, 2026-07-20).
+3. **2026-07-09 to 2026-07-12:** literature deep dive (P0-P3 from `docs/literature_review.md`); start corpus DOI lists; Week 0 wrap on 2026-07-12.
+4. **2026-07-13 to 2026-07-17:** Week 1 corpus collection + parsing; checkpoint 2026-07-17: 300-500 papers or cut to 300.
+5. **2026-09-15:** hard submission deadline.
+
+Open items / risks:
+- New: API keys still missing; if not in `.env` by 2026-07-14 this blocks Week 2 pipeline work.
+- New: 8 GB M1 makes local Llama-3 the slowest strand; if overnight runs prove impractical, fallback is Groq free tier for a reduced open-weight subset (document the endpoint change) or a smaller local model (llama3.2:3b), both need a note in the report's threats-to-validity.
+- New: Sonnet 5 intro pricing ends 2026-08-31; scale runs are scheduled Week 6 (2026-08-17 to 2026-08-23), inside the window, but slippage past August costs ~50% more on the Anthropic strand.
+- Carried: 10-week plan has no slack; renegotiate scope with Jalali in August if a week slips unrecoverably.
+- Carried: SynMOF licence/availability unconfirmed.
+- Carried: git commits authored as "vivekdhakasd12 <dhakadvivu5@gmail.com>"; decide before the repo goes public.
+- Carried: MOF-only corpus collection harder than broad scrape; mitigations DigiMOF article index, CoRE MOF DOI lists.
+- Carried: schedule lives only in the local Mac calendar; recreate on Google calendar if phone reminders are needed.
+
 ## 2026-07-06 (session 5) — Exposé approved + uploaded; 2-week slip; re-baselined schedule; ontology v0.2 alignment; first commits
 
 **Status:** Pre-project phase closed: Prof. Jalali approved the exposé (user reported approval on 2026-06-21, no verbatim quote on file) and the user uploaded it to Moodle on 2026-06-21, meeting the hard deadline. However, no project work happened between the official start (2026-06-22) and 2026-07-05: roughly 2 of 12 weeks lost. The plan is re-baselined to a 10-week run (2026-07-06 to 2026-09-15) with a defined cut order protecting the validation core. Week 0 Day 1 tasks are done; the repo now has its first commits and a v0.2-aligned type system, so extractor work is unblocked.
