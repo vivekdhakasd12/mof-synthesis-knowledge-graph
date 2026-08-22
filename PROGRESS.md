@@ -2,6 +2,30 @@
 
 A rolling log. Append a new dated entry every working session. Newest at the top.
 
+## 2026-08-14 (session 7) — Build begins; ingestion/corpus pipeline live (10 OA papers, tested)
+
+**Status:** Reality check at session start: despite the calendar/plan showing ~Week 5-6, the repo was **scaffold-only** (just the `Extractor` interface + tests). No pipeline code, no data. So the real build begins now with **~4.5 weeks to the 2026-09-15 deadline**. User re-confirmed the lean-MVP approach: protect the graded core (per-field validation + DigiMOF/SynMOF agreement); cut stretch goals early (KG-RAG QA, NL-to-Cypher, big ablation grid, likely the slow local-Llama strand). This session built the corpus foundation everything else needs.
+
+Done in this session:
+- **`src/ingestion` built and proven.** Modules: `models.py` (`CorpusDoc`/`Section`, mandatory provenance: paper_id, doi, pmcid, licence, retrieved_at; `.section()` helper to target the synthesis/experimental block), `europepmc.py` (search + disk-cached full-text-XML fetch; `requests` follows the endpoint redirect that a bare `curl` misses), `parse.py` (JATS XML -> sectioned text, namespace-agnostic `{*}` XPath, `itertext()` flatten so inline markup does not fragment sentences), `build_corpus.py` (typer CLI).
+- **Source decision: Europe PMC** as primary corpus source. Rationale: 49,627 OA MOF-synthesis papers expose *structured* JATS full text (labelled sections) far more reliably than scraping + PDF parsing. Open-access subset only.
+- **Live run proven:** `python -m src.ingestion.build_corpus --limit 10` -> `data/processed/corpus.jsonl`: 10 real OA papers, 352,739 chars, all Creative Commons (CC-BY / CC-BY-NC-ND); 9/10 have an identifiable synthesis/experimental section; real precursor/solvent text confirmed in output; the DigiMOF paper itself (PMC10269341) is in the set. Raw XML cached to `data/raw/europepmc/` (gitignored, verified).
+- **Quality gates green:** 6 new offline unit tests (JATS parse, provenance, nested-paragraph flatten, section lookup, empty-XML guard, JSONL roundtrip); full suite **12 passed**. ruff + ruff format + mypy all clean. Added `types-requests` + `lxml-stubs` to dev deps and a ruff `flake8-bugbear` allowlist for `typer.Option` (silences the B008 false-positive).
+
+Next (deadline order):
+1. **(user, parallel; still blocks the LLM strand at scale)** create OpenAI + Anthropic API accounts, paste keys into `.env`; send Jalali the ontology-signoff + ~EUR 60 funding email (drafted-ready on request).
+2. Scale corpus to ~150-300 papers: diversify queries beyond the default, add a CC-only licence filter, normalise licence strings to short codes; add Unpaywall/arXiv fetchers for OA chemistry papers not in Europe PMC.
+3. Acquire the DigiMOF + SynMOF reference records (for the agreement analysis) - the aimat-lab repo is ML-feature dumps, not a clean DOI-indexed record file; find the real database export (paper SI / Zenodo).
+4. Build the first `Extractor` subclass on the unified interface (rule-based/baseline first, key-free) running over `corpus.jsonl`.
+5. **2026-09-15** hard submission.
+
+Open items / risks:
+- New: corpus is Europe-PMC-only right now; much OA chemistry (RSC, ACS AuthorChoice, ChemRxiv) is not in EPMC, so the subset overlapping DigiMOF/SynMOF may be small. Mitigation: add Unpaywall/arXiv fetchers next; document coverage as a threat to validity.
+- New: not every OA "MOF synthesis" hit is a synthesis paper (PMC11835274 was a perspective, no experimental section). The query + a section-presence filter need tightening at scale.
+- Carried: **API keys still empty** -> LLM strand blocked once we scale; Jalali funding email unsent.
+- Carried: **schedule risk is now high** - 10-week plan had no slack and the build only starts at ~4.5 weeks out. If a week slips, tell Jalali in August (now), not September.
+- Carried: git commits authored "vivekdhakasd12 <dhakadvivu5@gmail.com>"; decide before the repo goes public.
+
 ## 2026-07-07 (session 6) — Day-1 prompt re-aimed to MOF framing; API-key status checked; LLM budget planned
 
 **Status:** Week 0 Day 2 tasks done. `docs/claude_code_prompt.md` now matches the approved exposé and the re-baselined schedule (commit `933e4d1`). API keys do NOT exist yet on this machine (no .env, no env vars, Ollama not installed); a gitignored `.env` scaffold is in place waiting for keys. The LLM budget is planned with verified July-2026 pricing and a free-first strategy; the funding question goes to Jalali in the 2026-07-08 ontology email.
