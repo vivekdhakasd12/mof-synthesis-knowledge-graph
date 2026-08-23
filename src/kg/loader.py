@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from loguru import logger
 
@@ -97,10 +97,16 @@ class KGLoader:
                 "NEO4J_PASSWORD is not set. Copy .env.example to .env and set it, "
                 "then start the database with: docker compose up -d"
             )
-        return cls(GraphDatabase.driver(uri, auth=(user, password)))
+        # The real neo4j Driver takes a fixed set of keyword-only session arguments, which
+        # is structurally narrower than the permissive DriverLike protocol used here so that
+        # tests can inject a simple fake. The cast records that this is intentional: the only
+        # keyword this loader ever passes is `database`, which the real driver accepts.
+        return cls(cast("DriverLike", GraphDatabase.driver(uri, auth=(user, password))))
 
     def _session(self) -> Any:
-        return self.driver.session(database=self.database) if self.database else self.driver.session()
+        if self.database:
+            return self.driver.session(database=self.database)
+        return self.driver.session()
 
     def ensure_schema(self) -> None:
         """Apply uniqueness constraints and indexes. Safe to call repeatedly."""

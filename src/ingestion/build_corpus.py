@@ -41,12 +41,29 @@ def build(
 
     docs: list[CorpusDoc] = []
     errors: list[str] = []
+    # Europe PMC can return the same record on two cursor pages, so the same paper can be
+    # collected twice. That matters more than it looks: passage ids are derived
+    # deterministically from paper id plus offset, so a duplicated paper produces duplicated
+    # passage ids, and the human gold standard keys on those ids. Deduplicate here, at the
+    # only point where the whole result set is visible.
+    seen_pmcids: set[str] = set()
+    seen_dois: set[str] = set()
     for h in hits:
         if len(docs) >= limit:
             break
         pmcid = h.get("pmcid")
         if not pmcid:
             continue
+        if pmcid in seen_pmcids:
+            errors.append(f"{pmcid}: duplicate PMCID in search results, skipped")
+            continue
+        doi_key = (h.get("doi") or "").lower()
+        if doi_key and doi_key in seen_dois:
+            errors.append(f"{pmcid}: duplicate DOI {doi_key}, skipped")
+            continue
+        seen_pmcids.add(pmcid)
+        if doi_key:
+            seen_dois.add(doi_key)
         try:
             xml = fetch_fulltext_xml(pmcid, cache_dir=cache_dir)
             if xml is None:

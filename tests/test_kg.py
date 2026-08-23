@@ -93,11 +93,7 @@ def test_entities_are_merged_on_normalised_key_not_surface_form():
             _triple(object=Entity(type="MetalPrecursor", name="copper nitrate trihydrate")),
         ]
     )
-    keys = {
-        p["key"]
-        for q, p in d.log
-        if "MERGE (n:MetalPrecursor" in q and "key" in p
-    }
+    keys = {p["key"] for q, p in d.log if "MERGE (n:MetalPrecursor" in q and "key" in p}
     # The hydrate and the word form must collapse to one node key.
     assert keys == {"copper nitrate"}
 

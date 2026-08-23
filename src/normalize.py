@@ -64,8 +64,7 @@ _HYDRATE = re.compile(
 
 # Unicode subscripts/superscripts used in formulae, mapped back to plain digits.
 _SUB_SUP = str.maketrans(
-    "₀₁₂₃₄₅₆₇₈₉"
-    "⁰¹²³⁴⁵⁶⁷⁸⁹",
+    "₀₁₂₃₄₅₆₇₈₉⁰¹²³⁴⁵⁶⁷⁸⁹",
     "01234567890123456789",
 )
 
@@ -82,9 +81,7 @@ def fold(text: str) -> str:
         return ""
     text = unicodedata.normalize("NFKC", text).translate(_SUB_SUP)
     text = text.replace("°", " degrees ")
-    text = "".join(
-        c for c in unicodedata.normalize("NFD", text) if unicodedata.category(c) != "Mn"
-    )
+    text = "".join(c for c in unicodedata.normalize("NFD", text) if unicodedata.category(c) != "Mn")
     return " ".join(text.lower().split())
 
 

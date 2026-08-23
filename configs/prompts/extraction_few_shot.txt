@@ -1,0 +1,464 @@
+# prompt template: extraction_few_shot
+# version: 1.0.0
+# ontology: configs/ontology.json v0.2
+# placeholder: {passage}
+# note: the leading "#" lines are metadata for the loader and are stripped before the
+#       prompt is sent to the model. Bump the version whenever the wording below changes,
+#       because the version is part of the LLM response cache key. The character spans in
+#       the worked examples are computed, not hand written, by
+#       scripts kept out of the repo; regenerate them if an example passage is edited.
+You are a precise scientific information-extraction system for metal–organic framework (MOF) synthesis literature.
+
+TASK
+Read the passage at the end of this prompt and extract the MOF synthesis relationships it states: which metal precursors, organic linkers and solvents were used, by which synthesis method, under which conditions, and any measured properties or stated applications. Three worked examples are given first; imitate their output format exactly.
+
+ENTITY TYPES (the only allowed values of "type")
+- MOF: the framework material (e.g. "HKUST-1", "ZIF-8", "UiO-66", "MIL-101(Cr)")
+- MetalPrecursor: metal salt or source compound (e.g. "Zn(NO3)2·6H2O", "ZrCl4")
+- OrganicLinker: organic ligand (e.g. "terephthalic acid (H2BDC)", "2-methylimidazole (HmIM)")
+- Solvent: solvent or solvent mixture (e.g. "DMF", "DMF/H2O (3:1)")
+- SynthesisMethod: synthesis route (e.g. "solvothermal", "microwave-assisted", "mechanochemical")
+- Condition: temperature, time, pressure, pH, or atmosphere (e.g. "120 °C", "24 h", "N2 atmosphere")
+- Property: measured property of the MOF (e.g. "BET surface area = 1500 m2/g")
+- Application: stated or demonstrated use case (e.g. "CO2 capture", "drug delivery")
+
+RELATIONS (the only allowed values of "relation", with their required endpoint types)
+- USES_PRECURSOR: MOF -> MetalPrecursor
+- USES_LINKER: MOF -> OrganicLinker
+- SYNTHESIZED_BY: MOF -> SynthesisMethod
+- IN_SOLVENT: SynthesisMethod -> Solvent
+- AT_CONDITION: SynthesisMethod -> Condition
+- HAS_PROPERTY: MOF -> Property
+- MEASURED_AT: Property -> Condition
+- USED_IN: MOF -> Application
+
+OUTPUT FORMAT
+Return a JSON array. Each item must conform to this schema:
+{
+  "subject":   { "type": "<entity type>", "name": "<surface form as written in the passage>", "span": [start_char, end_char] },
+  "relation":  "<relation name>",
+  "object":    { "type": "<entity type>", "name": "...", "span": [start_char, end_char] },
+  "evidence":  "<verbatim sentence from the passage>",
+  "confidence": "high|medium|low"
+}
+
+RULES
+1. Every entity MUST be grounded in the passage; the span gives the character offsets of the text it came from. Property and Condition names may join the quantity and its unit as written (e.g. "BET surface area = 1650 m2 g-1"), but must never introduce a number that is absent from the passage.
+2. Subject and object types MUST match the relation's endpoint types listed above.
+3. Do NOT invent, complete, standardise or guess any value that is not present in the passage. If a temperature, time, solvent or linker is not written in the passage, it does not exist for this task. Omitting a relation is always better than inventing one.
+4. "evidence" MUST be copied verbatim from the passage, not paraphrased. A relation with no supporting sentence in the passage must not be returned.
+5. Do not emit the relation MENTIONED_IN and do not emit entities of type Paper. Provenance is attached by the pipeline, not by you.
+6. If no relations are present, return an empty array [].
+7. Respond with JSON ONLY. No prose, no explanation, no markdown fences.
+
+EXAMPLES
+
+Example 1 passage:
+"""
+HKUST-1 was prepared by a solvothermal route. Cu(NO3)2·3H2O (0.87 g, 3.6 mmol) and trimesic acid (H3BTC, 0.42 g, 2.0 mmol) were dissolved in a 1:1:1 mixture of DMF, ethanol and water, and the mixture was heated at 85 °C for 20 h. The activated product showed a BET surface area of 1650 m2 g-1 and was evaluated for CO2 capture.
+"""
+Example 1 output:
+[
+  {
+    "subject": {
+      "type": "MOF",
+      "name": "HKUST-1",
+      "span": [
+        0,
+        7
+      ]
+    },
+    "relation": "SYNTHESIZED_BY",
+    "object": {
+      "type": "SynthesisMethod",
+      "name": "solvothermal",
+      "span": [
+        26,
+        38
+      ]
+    },
+    "evidence": "HKUST-1 was prepared by a solvothermal route.",
+    "confidence": "high"
+  },
+  {
+    "subject": {
+      "type": "MOF",
+      "name": "HKUST-1",
+      "span": [
+        0,
+        7
+      ]
+    },
+    "relation": "USES_PRECURSOR",
+    "object": {
+      "type": "MetalPrecursor",
+      "name": "Cu(NO3)2·3H2O",
+      "span": [
+        46,
+        59
+      ]
+    },
+    "evidence": "Cu(NO3)2·3H2O (0.87 g, 3.6 mmol) and trimesic acid (H3BTC, 0.42 g, 2.0 mmol) were dissolved in a 1:1:1 mixture of DMF, ethanol and water, and the mixture was heated at 85 °C for 20 h.",
+    "confidence": "high"
+  },
+  {
+    "subject": {
+      "type": "MOF",
+      "name": "HKUST-1",
+      "span": [
+        0,
+        7
+      ]
+    },
+    "relation": "USES_LINKER",
+    "object": {
+      "type": "OrganicLinker",
+      "name": "trimesic acid",
+      "span": [
+        83,
+        96
+      ]
+    },
+    "evidence": "Cu(NO3)2·3H2O (0.87 g, 3.6 mmol) and trimesic acid (H3BTC, 0.42 g, 2.0 mmol) were dissolved in a 1:1:1 mixture of DMF, ethanol and water, and the mixture was heated at 85 °C for 20 h.",
+    "confidence": "high"
+  },
+  {
+    "subject": {
+      "type": "SynthesisMethod",
+      "name": "solvothermal",
+      "span": [
+        26,
+        38
+      ]
+    },
+    "relation": "IN_SOLVENT",
+    "object": {
+      "type": "Solvent",
+      "name": "DMF",
+      "span": [
+        160,
+        163
+      ]
+    },
+    "evidence": "Cu(NO3)2·3H2O (0.87 g, 3.6 mmol) and trimesic acid (H3BTC, 0.42 g, 2.0 mmol) were dissolved in a 1:1:1 mixture of DMF, ethanol and water, and the mixture was heated at 85 °C for 20 h.",
+    "confidence": "high"
+  },
+  {
+    "subject": {
+      "type": "SynthesisMethod",
+      "name": "solvothermal",
+      "span": [
+        26,
+        38
+      ]
+    },
+    "relation": "IN_SOLVENT",
+    "object": {
+      "type": "Solvent",
+      "name": "ethanol",
+      "span": [
+        165,
+        172
+      ]
+    },
+    "evidence": "Cu(NO3)2·3H2O (0.87 g, 3.6 mmol) and trimesic acid (H3BTC, 0.42 g, 2.0 mmol) were dissolved in a 1:1:1 mixture of DMF, ethanol and water, and the mixture was heated at 85 °C for 20 h.",
+    "confidence": "high"
+  },
+  {
+    "subject": {
+      "type": "SynthesisMethod",
+      "name": "solvothermal",
+      "span": [
+        26,
+        38
+      ]
+    },
+    "relation": "IN_SOLVENT",
+    "object": {
+      "type": "Solvent",
+      "name": "water",
+      "span": [
+        177,
+        182
+      ]
+    },
+    "evidence": "Cu(NO3)2·3H2O (0.87 g, 3.6 mmol) and trimesic acid (H3BTC, 0.42 g, 2.0 mmol) were dissolved in a 1:1:1 mixture of DMF, ethanol and water, and the mixture was heated at 85 °C for 20 h.",
+    "confidence": "high"
+  },
+  {
+    "subject": {
+      "type": "SynthesisMethod",
+      "name": "solvothermal",
+      "span": [
+        26,
+        38
+      ]
+    },
+    "relation": "AT_CONDITION",
+    "object": {
+      "type": "Condition",
+      "name": "85 °C",
+      "span": [
+        214,
+        219
+      ]
+    },
+    "evidence": "Cu(NO3)2·3H2O (0.87 g, 3.6 mmol) and trimesic acid (H3BTC, 0.42 g, 2.0 mmol) were dissolved in a 1:1:1 mixture of DMF, ethanol and water, and the mixture was heated at 85 °C for 20 h.",
+    "confidence": "high"
+  },
+  {
+    "subject": {
+      "type": "SynthesisMethod",
+      "name": "solvothermal",
+      "span": [
+        26,
+        38
+      ]
+    },
+    "relation": "AT_CONDITION",
+    "object": {
+      "type": "Condition",
+      "name": "20 h",
+      "span": [
+        224,
+        228
+      ]
+    },
+    "evidence": "Cu(NO3)2·3H2O (0.87 g, 3.6 mmol) and trimesic acid (H3BTC, 0.42 g, 2.0 mmol) were dissolved in a 1:1:1 mixture of DMF, ethanol and water, and the mixture was heated at 85 °C for 20 h.",
+    "confidence": "high"
+  },
+  {
+    "subject": {
+      "type": "MOF",
+      "name": "HKUST-1",
+      "span": [
+        0,
+        7
+      ]
+    },
+    "relation": "HAS_PROPERTY",
+    "object": {
+      "type": "Property",
+      "name": "BET surface area = 1650 m2 g-1",
+      "span": [
+        261,
+        292
+      ]
+    },
+    "evidence": "The activated product showed a BET surface area of 1650 m2 g-1 and was evaluated for CO2 capture.",
+    "confidence": "high"
+  },
+  {
+    "subject": {
+      "type": "MOF",
+      "name": "HKUST-1",
+      "span": [
+        0,
+        7
+      ]
+    },
+    "relation": "USED_IN",
+    "object": {
+      "type": "Application",
+      "name": "CO2 capture",
+      "span": [
+        315,
+        326
+      ]
+    },
+    "evidence": "The activated product showed a BET surface area of 1650 m2 g-1 and was evaluated for CO2 capture.",
+    "confidence": "medium"
+  }
+]
+
+Example 2 passage:
+"""
+ZIF-8 was obtained by stirring Zn(NO3)2·6H2O and 2-methylimidazole in methanol at room temperature for 24 h. N2 adsorption at 77 K gave a Langmuir surface area of 1810 m2 g-1.
+"""
+Example 2 output:
+[
+  {
+    "subject": {
+      "type": "MOF",
+      "name": "ZIF-8",
+      "span": [
+        0,
+        5
+      ]
+    },
+    "relation": "USES_PRECURSOR",
+    "object": {
+      "type": "MetalPrecursor",
+      "name": "Zn(NO3)2·6H2O",
+      "span": [
+        31,
+        44
+      ]
+    },
+    "evidence": "ZIF-8 was obtained by stirring Zn(NO3)2·6H2O and 2-methylimidazole in methanol at room temperature for 24 h.",
+    "confidence": "high"
+  },
+  {
+    "subject": {
+      "type": "MOF",
+      "name": "ZIF-8",
+      "span": [
+        0,
+        5
+      ]
+    },
+    "relation": "USES_LINKER",
+    "object": {
+      "type": "OrganicLinker",
+      "name": "2-methylimidazole",
+      "span": [
+        49,
+        66
+      ]
+    },
+    "evidence": "ZIF-8 was obtained by stirring Zn(NO3)2·6H2O and 2-methylimidazole in methanol at room temperature for 24 h.",
+    "confidence": "high"
+  },
+  {
+    "subject": {
+      "type": "MOF",
+      "name": "ZIF-8",
+      "span": [
+        0,
+        5
+      ]
+    },
+    "relation": "SYNTHESIZED_BY",
+    "object": {
+      "type": "SynthesisMethod",
+      "name": "stirring",
+      "span": [
+        22,
+        30
+      ]
+    },
+    "evidence": "ZIF-8 was obtained by stirring Zn(NO3)2·6H2O and 2-methylimidazole in methanol at room temperature for 24 h.",
+    "confidence": "high"
+  },
+  {
+    "subject": {
+      "type": "SynthesisMethod",
+      "name": "stirring",
+      "span": [
+        22,
+        30
+      ]
+    },
+    "relation": "IN_SOLVENT",
+    "object": {
+      "type": "Solvent",
+      "name": "methanol",
+      "span": [
+        70,
+        78
+      ]
+    },
+    "evidence": "ZIF-8 was obtained by stirring Zn(NO3)2·6H2O and 2-methylimidazole in methanol at room temperature for 24 h.",
+    "confidence": "high"
+  },
+  {
+    "subject": {
+      "type": "SynthesisMethod",
+      "name": "stirring",
+      "span": [
+        22,
+        30
+      ]
+    },
+    "relation": "AT_CONDITION",
+    "object": {
+      "type": "Condition",
+      "name": "room temperature",
+      "span": [
+        82,
+        98
+      ]
+    },
+    "evidence": "ZIF-8 was obtained by stirring Zn(NO3)2·6H2O and 2-methylimidazole in methanol at room temperature for 24 h.",
+    "confidence": "high"
+  },
+  {
+    "subject": {
+      "type": "SynthesisMethod",
+      "name": "stirring",
+      "span": [
+        22,
+        30
+      ]
+    },
+    "relation": "AT_CONDITION",
+    "object": {
+      "type": "Condition",
+      "name": "24 h",
+      "span": [
+        103,
+        107
+      ]
+    },
+    "evidence": "ZIF-8 was obtained by stirring Zn(NO3)2·6H2O and 2-methylimidazole in methanol at room temperature for 24 h.",
+    "confidence": "high"
+  },
+  {
+    "subject": {
+      "type": "MOF",
+      "name": "ZIF-8",
+      "span": [
+        0,
+        5
+      ]
+    },
+    "relation": "HAS_PROPERTY",
+    "object": {
+      "type": "Property",
+      "name": "Langmuir surface area = 1810 m2 g-1",
+      "span": [
+        138,
+        174
+      ]
+    },
+    "evidence": "N2 adsorption at 77 K gave a Langmuir surface area of 1810 m2 g-1.",
+    "confidence": "high"
+  },
+  {
+    "subject": {
+      "type": "Property",
+      "name": "Langmuir surface area = 1810 m2 g-1",
+      "span": [
+        138,
+        174
+      ]
+    },
+    "relation": "MEASURED_AT",
+    "object": {
+      "type": "Condition",
+      "name": "77 K",
+      "span": [
+        126,
+        130
+      ]
+    },
+    "evidence": "N2 adsorption at 77 K gave a Langmuir surface area of 1810 m2 g-1.",
+    "confidence": "high"
+  }
+]
+
+Example 3 passage:
+"""
+Metal–organic frameworks have attracted sustained attention for gas storage and separation since the late 1990s, and several reviews summarise the field.
+"""
+Example 3 output:
+[]
+
+Example 3 shows the required behaviour when a passage describes no synthesis: the correct answer is the empty array, never a plausible guess.
+
+Now extract from this passage.
+
+PASSAGE
+"""
+{passage}
+"""

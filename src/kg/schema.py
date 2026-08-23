@@ -43,14 +43,10 @@ REL_TYPES = (
 # the surface form, so "Cu(NO3)2.3H2O" and "copper nitrate trihydrate" can be merged by
 # entity resolution into one node while both surface forms are retained as aliases.
 CONSTRAINTS: tuple[str, ...] = tuple(
-    f"CREATE CONSTRAINT {label.lower()}_key IF NOT EXISTS "
-    f"FOR (n:{label}) REQUIRE n.key IS UNIQUE"
+    f"CREATE CONSTRAINT {label.lower()}_key IF NOT EXISTS FOR (n:{label}) REQUIRE n.key IS UNIQUE"
     for label in NODE_LABELS
     if label != "Paper"
-) + (
-    "CREATE CONSTRAINT paper_id IF NOT EXISTS "
-    "FOR (p:Paper) REQUIRE p.paper_id IS UNIQUE",
-)
+) + ("CREATE CONSTRAINT paper_id IF NOT EXISTS FOR (p:Paper) REQUIRE p.paper_id IS UNIQUE",)
 
 # Indexes that matter for the dashboard's lookup and aggregation queries.
 INDEXES: tuple[str, ...] = (
