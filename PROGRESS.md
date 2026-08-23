@@ -2,6 +2,81 @@
 
 A rolling log. Append a new dated entry every working session. Newest at the top.
 
+## 2026-08-23 (session 8) — Full extraction pipeline built, tested, and measured
+
+**Status:** The pipeline now runs end to end on real data. 180 tests pass, ruff and mypy are
+clean, coverage 82 percent. Two commits on `feat/pipeline-foundation` (`ddecdd2`, `ad0fcc1`).
+The graded core is now buildable: what remains blocking is the human gold standard and the
+API keys.
+
+Done in this session:
+- **Recovered a failed parallel build.** The five build agents were killed mid-run by a usage
+  limit, leaving partial modules and three missing test files. Rather than rerun them, the
+  surviving code was verified, corrected and completed by hand.
+- **`src/ingestion/segment.py`**: papers to scored synthesis passages with stable
+  deterministic ids. Real run: 22,086 passages from 399 papers, **794 flagged synthesis
+  across 224 papers**, mean 929 characters. Threshold sensitivity recorded (0.25 gives 2,369
+  passages, 0.45 gives 794, 0.65 gives 268) so the cutoff is a defended choice.
+- **Data bug found and fixed.** Verifying passage id uniqueness (the gold standard keys on
+  those ids) exposed 17 collisions. Cause was upstream in `build_corpus.py`: Europe PMC
+  returned one paper on two cursor pages and the collector never deduplicated. Now
+  deduplicated by PMCID and DOI; corpus 400 to 399, zero collisions.
+- **`src/extraction/rule_based.py`** plus **`llm_extractor.py`**, **`cache.py`**, and all four
+  prompt templates (zero-shot, few-shot, schema-guided, chain-of-thought). LLM strand is
+  fully testable offline against a fake client, with sockets severed by an autouse fixture,
+  so it needs no key until it runs for real.
+- **`src/evaluation/metrics.py`**: per-field precision, recall and F1 with exact and relaxed
+  matching on the shared normaliser, plus record-level agreement where a missing reference
+  field counts as not comparable rather than as a disagreement.
+- **`src/pipeline.py`** (written here, not by an agent): the experiment runner. Resumable on
+  (passage, extractor) so an interrupted paid run is never billed twice; records a raising
+  extractor as a contract violation instead of aborting the run. Coverage 89 percent.
+- **`src/annotation/`**: Streamlit tool, ontology-constrained so an invalid triple cannot be
+  created, autosaving to `data/annotations/gold.jsonl`. Worklist is 200 passages, 180 from
+  the synthesis pool plus **20 unflagged controls so the pre-filter's own miss rate is
+  measurable**, seeded and deterministic, interleaved against fatigue bias. README written
+  with concrete annotation conventions.
+- **Baseline measured honestly** (`docs/baseline_findings.md`): 1,864 triples over 794
+  passages at zero cost and 0.6 ms per passage, but **a MOF is identified in only 15 percent
+  of passages**, which structurally suppresses the five relations the ontology roots at MOF.
+  Of 638 passages with no recognised MOF, 331 name it elsewhere in the paper and 251 use a
+  generic designation. The metal-linker convention (Cu-BTC, Co-TPA) was unhandled and has
+  been added, since missing a standard name for HKUST-1 was a defect, not an honest limit,
+  and a strawman baseline would invalidate the comparison.
+- **Pre-registered prediction recorded before any LLM runs**, so it cannot be fitted after
+  the fact: the LLM margin should be largest on USES_PRECURSOR, USES_LINKER and
+  SYNTHESIZED_BY, and smallest on AT_CONDITION and IN_SOLVENT where local patterns already
+  work. Fairness note: the LLM sees the same single passage, so cross-passage coreference is
+  hard for both systems and an LLM win there would be suspicious rather than impressive.
+- Integration defects caught by type checking rather than at runtime: the runner called a
+  client factory the LLM module does not expose, and the Neo4j protocol needed a documented
+  cast. Both fixed.
+- **API keys were pasted into chat three times and are burned.** Containment verified: `.env`
+  is gitignored and no key string exists in any tracked file. `scripts/set_keys.sh` now
+  prompts for keys with input hidden so the safe path is the easy one.
+
+Next (deadline order):
+1. **User:** rotate all three keys (OpenAI, Anthropic, Groq), run `bash scripts/set_keys.sh`.
+2. **User:** annotate 150 to 200 passages via the Streamlit tool. Critical path, roughly 3 to
+   5 hours, cannot be delegated without invalidating the evaluation.
+3. Start Neo4j (colima plus docker compose), load triples, verify `provenance_violations`
+   returns zero rows.
+4. Wire the real ChemDataExtractor baseline from the vendored DigiMOF parsers; assess
+   MatSciBERT.
+5. Run all four prompting strategies across GPT-4o, Claude and Groq Llama-3.3-70B once keys
+   land; compute per-field metrics against the frozen gold standard.
+6. **2026-09-15** hard submission.
+
+Open items / risks:
+- Carried and now urgent: the gold standard is the critical path and needs the user's hours.
+- Carried: the DigiMOF join is by CSD refcode, not DOI, which bounds the agreement analysis.
+  Recommendation remains to join on MOF name and report the ambiguity.
+- New: 47 percent of synthesis passages yield zero triples from the baseline. Partly genuine
+  (reagent manifests contain no relation), partly corpus precision. Quantify before writing
+  the results chapter.
+- Carried: 8 GB RAM means Neo4j and heavy jobs should not run concurrently.
+- Carried: two corpus papers have unrecognised licences and must be verified or dropped.
+
 ## 2026-08-14 (session 7) — Build begins; ingestion/corpus pipeline live (10 OA papers, tested)
 
 **Status:** Reality check at session start: despite the calendar/plan showing ~Week 5-6, the repo was **scaffold-only** (just the `Extractor` interface + tests). No pipeline code, no data. So the real build begins now with **~4.5 weeks to the 2026-09-15 deadline**. User re-confirmed the lean-MVP approach: protect the graded core (per-field validation + DigiMOF/SynMOF agreement); cut stretch goals early (KG-RAG QA, NL-to-Cypher, big ablation grid, likely the slow local-Llama strand). This session built the corpus foundation everything else needs.
