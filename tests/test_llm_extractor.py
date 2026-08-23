@@ -488,9 +488,15 @@ def test_model_without_a_price_entry_costs_zero_and_says_so(tmp_path: Path) -> N
 
 
 def test_dated_model_ids_reuse_the_family_price(tmp_path: Path) -> None:
-    extractor, _ = make_extractor(tmp_path, model="claude-3-5-sonnet-20241022")
+    """A dated snapshot id must inherit its family's price rather than costing nothing.
+
+    Providers publish snapshot ids such as gpt-4o-2024-11-20. Without prefix matching those
+    would miss the price table, report a cost of 0.00, and silently understate the spend in
+    the cost comparison that research question 4 depends on.
+    """
+    extractor, _ = make_extractor(tmp_path, model="gpt-4o-2024-11-20")
     result = extractor.extract(PASSAGE, paper_id="PMC1", section="Methods")
-    assert result.cost_usd == pytest.approx(1200 / 1e6 * 3.00 + 300 / 1e6 * 15.00)
+    assert result.cost_usd == pytest.approx(1200 / 1e6 * 2.50 + 300 / 1e6 * 10.00)
     assert not any("no verified price" in e for e in result.errors)
 
 

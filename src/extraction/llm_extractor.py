@@ -94,13 +94,22 @@ PIPELINE_ONLY_ENTITY_TYPES: frozenset[str] = frozenset({"Paper"})
 # fabricated number in the cost table.
 # ---------------------------------------------------------------------------------------
 PRICE_PER_MTOK_USD: dict[str, tuple[float, float]] = {
+    # OpenAI. NOT yet re-verified in-project; check openai.com/api/pricing before the run.
     "gpt-4o": (2.50, 10.00),
     "gpt-4o-mini": (0.15, 0.60),
-    "claude-3-5-sonnet": (3.00, 15.00),
-    "claude-3-5-haiku": (0.80, 4.00),
+    # Anthropic. Verified 2026-08-23. Sonnet 5 carries introductory pricing of
+    # (2.00, 10.00) through 2026-08-31, after which it reverts to the values below, so a
+    # run that slips past August costs about 50 percent more on this row.
+    "claude-sonnet-5": (3.00, 15.00),
+    "claude-haiku-4-5": (1.00, 5.00),
+    "claude-opus-5": (5.00, 25.00),
+    # Groq. List price for the paid tier. The project runs this model on the free tier, so
+    # the realised cost is zero; the list price is kept here so the report can state what
+    # the open-weight strand WOULD have cost at commercial rates, which is the honest
+    # comparison for research question 4.
     "llama-3.3-70b-versatile": (0.59, 0.79),
 }
-PRICE_TABLE_CHECKED_ON = "TODO: not yet verified in-project; re-check before the final run"
+PRICE_TABLE_CHECKED_ON = "2026-08-23 (Anthropic rows verified; OpenAI and Groq rows pending)"
 
 
 class MissingAPIKeyError(RuntimeError):
