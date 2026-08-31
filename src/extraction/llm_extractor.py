@@ -108,6 +108,14 @@ PRICE_PER_MTOK_USD: dict[str, tuple[float, float]] = {
     # the open-weight strand WOULD have cost at commercial rates, which is the honest
     # comparison for research question 4.
     "llama-3.3-70b-versatile": (0.59, 0.79),
+    # Groq retired every Llama chat model; verified against the live model list 2026-08-31.
+    # gpt-oss-120b is an open-WEIGHTS release, not the proprietary GPT-4o API, and it runs
+    # here on Groq's free tier, so realised cost is zero. No per-token list price is recorded
+    # because none was verified, and inventing one would put a fabricated figure in the cost
+    # table that research question 4 depends on.
+    "openai/gpt-oss-120b": (0.0, 0.0),
+    "openai/gpt-oss-20b": (0.0, 0.0),
+    "qwen/qwen3.8-27b": (0.0, 0.0),
     # NVIDIA NIM backup host. Run on the free tier, so realised cost is zero. Unlike the
     # Groq row there is no verified per-token list price recorded here, so the counterfactual
     # "what this would have cost commercially" cannot be quoted for these models. Report the
@@ -542,7 +550,7 @@ class LLMExtractor(Extractor):
         *,
         cache: LLMCache | None = None,
         temperature: float = 0.0,
-        max_tokens: int = 2048,
+        max_tokens: int = 4096,
         ontology_path: str | Path | None = None,
     ) -> None:
         if strategy not in STRATEGIES:
@@ -631,6 +639,25 @@ class LLMExtractor(Extractor):
 
             prompt_tokens = int(getattr(response, "prompt_tokens", 0) or 0)
             completion_tokens = int(getattr(response, "completion_tokens", 0) or 0)
+
+            # An empty completion is a failure, not a finding, and it must never be allowed
+            # to look like one. Reasoning models bill for tokens spent thinking and can
+            # return no content at all when that budget is exhausted before any answer is
+            # written: one observed call spent 2,540 completion tokens and returned an empty
+            # string. Without this check the run records "0 triples, no errors", which is
+            # indistinguishable from a model that read the passage and correctly found
+            # nothing. That distinction is the difference between a real result and a
+            # silently broken strand in the open-weight comparison.
+            if not (response.text or "").strip():
+                errors.append(
+                    f"empty completion from '{self.model}' after {completion_tokens} "
+                    "completion tokens; the response carried no content to parse. For a "
+                    "reasoning model this usually means the token budget was consumed "
+                    "before any answer was produced, so raise max_tokens or lower the "
+                    "reasoning effort."
+                )
+                logger.warning("{}: empty completion after {} tokens", self.name, completion_tokens)
+
             cost = estimate_cost_usd(self.model, prompt_tokens, completion_tokens)
             if cost is None:
                 errors.append(

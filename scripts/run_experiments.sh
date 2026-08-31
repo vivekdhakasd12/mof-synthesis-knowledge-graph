@@ -6,7 +6,15 @@
 #
 # The model set was chosen on 2026-08-31 and costs about EUR 1.72 in total, batched.
 #
-#   groq:llama-3.3-70b-versatile   open-weight strand, free tier, answers RQ4
+#   groq:qwen/qwen3.8-27b          open-weight strand, free tier, answers RQ4.
+#                                  Groq retired every Llama chat model, verified against the
+#                                  live model list on 2026-08-31, so the exposé's Llama-3
+#                                  plan is no longer runnable there. gpt-oss-120b was tried
+#                                  first and rejected on evidence: it spent all 4,096
+#                                  completion tokens reasoning and returned empty content on
+#                                  the schema-guided prompt. Qwen also gives better vendor
+#                                  diversity, being an independent lineage rather than an
+#                                  OpenAI-derived model sitting opposite the GPT-4o rows.
 #   openai:gpt-4o-mini             cheap commercial tier, about EUR 0.10 for the whole grid
 #   openai:gpt-4o                  strong commercial tier
 #
@@ -29,7 +37,7 @@ done
 [ "$missing" -eq 1 ] && { echo; echo "Add the keys, then re-run. Nothing was called, nothing was billed."; exit 1; }
 
 STRATEGIES=(zero_shot few_shot schema_guided cot)
-MODELS=(groq:llama-3.3-70b-versatile openai:gpt-4o-mini openai:gpt-4o)
+MODELS=(groq:qwen/qwen3.8-27b openai:gpt-4o-mini openai:gpt-4o)
 
 SPECS="rule_based"
 for m in "${MODELS[@]}"; do
