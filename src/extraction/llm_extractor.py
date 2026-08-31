@@ -108,6 +108,11 @@ PRICE_PER_MTOK_USD: dict[str, tuple[float, float]] = {
     # the open-weight strand WOULD have cost at commercial rates, which is the honest
     # comparison for research question 4.
     "llama-3.3-70b-versatile": (0.59, 0.79),
+    # NVIDIA NIM backup host. Run on the free tier, so realised cost is zero. Unlike the
+    # Groq row there is no verified per-token list price recorded here, so the counterfactual
+    # "what this would have cost commercially" cannot be quoted for these models. Report the
+    # realised zero and say the list price was not established, rather than inventing one.
+    "nvidia/llama-3.1-nemotron-70b-instruct": (0.0, 0.0),
 }
 PRICE_TABLE_CHECKED_ON = "2026-08-23 (Anthropic rows verified; OpenAI and Groq rows pending)"
 
@@ -213,6 +218,28 @@ class GroqClient(_OpenAICompatibleClient):
     env_var: str = "GROQ_API_KEY"
     base_url: str | None = "https://api.groq.com/openai/v1"
     console_url: str = "https://console.groq.com/keys"
+
+
+class NvidiaClient(_OpenAICompatibleClient):
+    """Backup open-weight host: NVIDIA NIM, also OpenAI-compatible.
+
+    Not the primary open-weight strand. NVIDIA does not host meta/llama-3.3-70b-instruct,
+    so it cannot reproduce the Groq run exactly; its strongest comparable text models are
+    NVIDIA's own Nemotron derivatives (for example nvidia/llama-3.1-nemotron-70b-instruct).
+
+    It earns its place as insurance rather than as a result. The Groq free tier allows about
+    1,000 requests per day and the evaluation grid needs 800, so a single misfire can strand
+    the open-weight strand for 24 hours with a fixed submission date approaching. Switching
+    host is then a one word change to the extractor spec.
+
+    If it is used for anything reported, say which host and which model produced each number:
+    a Nemotron result is not interchangeable with a Llama-3.3 result.
+    """
+
+    provider: str = "nvidia"
+    env_var: str = "NVIDIA_API_KEY"
+    base_url: str | None = "https://integrate.api.nvidia.com/v1"
+    console_url: str = "https://build.nvidia.com"
 
 
 class AnthropicClient:

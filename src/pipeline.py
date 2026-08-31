@@ -226,6 +226,7 @@ def build_extractor(spec: str) -> Extractor:
         GroqClient,
         LLMClient,
         LLMExtractor,
+        NvidiaClient,
         OpenAIClient,
     )
 
@@ -236,6 +237,7 @@ def build_extractor(spec: str) -> Extractor:
         "openai": OpenAIClient,
         "anthropic": AnthropicClient,
         "groq": GroqClient,
+        "nvidia": NvidiaClient,
     }
     if provider not in clients:
         raise ValueError(f"unknown provider {provider!r}. Known providers: {sorted(clients)}")

@@ -1,3 +1,9 @@
+# prompt template: extraction_schema_guided
+# version: 1.0.0
+# ontology: configs/ontology.json v0.2
+# placeholder: {passage}
+# note: version header added 2026-08-31, before any cached inference existed, so no
+#       previously cached response is invalidated by introducing it.
 You are a precise scientific information-extraction system for metal–organic framework (MOF) synthesis literature.
 
 TASK
