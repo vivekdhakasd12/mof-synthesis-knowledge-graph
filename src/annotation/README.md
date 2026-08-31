@@ -18,21 +18,32 @@ against. It has to be human work: pre-filling it with model output would mean ju
 models against their own output, which is circular and would not survive a viva. The tool
 therefore constrains and speeds up your choices, but never proposes an answer.
 
-Your worklist is **200 passages**, drawn deterministically (seed fixed, so it can be
-regenerated for a reproducibility check):
+Your worklist is **100 passages**, drawn deterministically (seed fixed, so it can be
+regenerated from the corpus for a reproducibility check):
 
-- **180 from the synthesis pool** flagged by the pre-filter, because the graded question is
+- **90 from the synthesis pool** flagged by the pre-filter, because the graded question is
   per-field accuracy on synthesis records.
-- **20 control passages the filter did NOT flag.** These exist so the pre-filter's own miss
+- **10 control passages the filter did NOT flag.** These exist so the pre-filter's own miss
   rate is measurable. Without them, every recall figure in the report would be silently
   conditional on an unvalidated heuristic. Annotate them exactly as honestly as the rest;
   finding synthesis content in a control passage is a useful result, not a mistake.
 
 The two strata are interleaved rather than blocked, so fatigue does not fall on one stratum.
 
-Target: 150 to 200 annotated. Budget roughly 3 to 5 hours in total. Do it in several
-sittings; consistency degrades quickly when tired, and consistency matters more here than
-speed.
+Target: **80 to 100 annotated. Budget 2 to 3 hours.** Do it in several sittings; consistency
+degrades quickly when tired, and consistency matters more here than speed.
+
+**On the sample size.** The exposé said 150 to 200; this was cut to 80 to 100 on 2026-08-31
+because annotator hours are the binding constraint and the submission date is fixed. State
+that plainly in the methodology, along with what it costs: wider confidence intervals on
+every per-field score, and possibly too little support to say anything about the rarer
+relations. Print per-field support counts next to every score and do not draw conclusions
+from a field whose support is in single figures.
+
+**The cut is extensible, not destructive.** Because the seed and the strata are unchanged,
+these 100 passages are a strict subset of the original 200-item worklist. If time appears
+later, raise `TARGET_MAX` back to 200 and keep annotating; nothing already done is wasted or
+needs redoing.
 
 ## The rules. Follow them even when you disagree
 

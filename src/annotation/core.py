@@ -54,10 +54,26 @@ CORPUS_PATH = REPO_ROOT / "data" / "processed" / "corpus.jsonl"
 GOLD_PATH = REPO_ROOT / "data" / "annotations" / "gold.jsonl"
 ONTOLOGY_PATH = REPO_ROOT / "configs" / "ontology.json"
 
-# Sample size agreed in the exposé. `remaining` counts down to the lower bound, because
-# 150 is the point at which the evaluation is defensible and 200 is the stretch target.
-TARGET_MIN = 150
-TARGET_MAX = 200
+# Sample size. Reduced from the exposé's 150 to 200 down to 80 to 100 on 2026-08-31. This is
+# a declared trade, not a slip, and the reasoning belongs in the methodology chapter.
+#
+# The gold standard has to be produced by the annotator personally, because it is the ruler
+# the language models are measured against and a model-generated ruler would make every
+# accuracy figure circular. That makes annotator hours the binding constraint on the study,
+# and with the submission date fixed the honest lever is sample size, not sample provenance.
+#
+# What this costs: wider confidence intervals on every per-field score, and unreliable
+# estimates for the rarer relations. HAS_PROPERTY and MEASURED_AT already appear in only a
+# handful of baseline extractions, so they may not reach usable support at this sample size.
+# The results chapter must therefore print per-field support counts beside every score and
+# must not draw conclusions from any field whose support is in single figures.
+#
+# What it preserves: the stratified design, the fixed seed, and the unflagged control
+# stratum. Those are what make the evaluation reproducible and let the pre-filter's own miss
+# rate be measured. The count is what makes it precise, and precision was the affordable
+# thing to give up.
+TARGET_MIN = 80
+TARGET_MAX = 100
 
 # MENTIONED_IN is provenance, attached by the pipeline from the passage metadata. It is
 # never hand annotated, so it is excluded from every UI dropdown and rejected by

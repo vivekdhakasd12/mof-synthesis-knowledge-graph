@@ -213,7 +213,12 @@ def test_progress_stats_counts_against_the_target_range(gold_path):
     assert (stats.annotated, stats.no_synthesis, stats.skipped) == (3, 1, 1)
     assert stats.reviewed == 5
     assert stats.triples == 6
-    assert stats.target_range == (core.TARGET_MIN, core.TARGET_MAX) == (150, 200)
+    # Asserted against the constants, not literals: the sample size is a declared research
+    # decision that may legitimately change (cut from 150-200 to 80-100 on 2026-08-31), and
+    # a test hardcoding it would fail for the wrong reason. The invariant worth protecting
+    # is that the range stays coherent, not that it stays fixed.
+    assert stats.target_range == (core.TARGET_MIN, core.TARGET_MAX)
+    assert 0 < core.TARGET_MIN <= core.TARGET_MAX
     assert stats.remaining == core.TARGET_MIN - 3
     assert stats.is_complete is False
     assert 0 < stats.fraction_of_target < 1
