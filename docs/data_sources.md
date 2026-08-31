@@ -68,3 +68,29 @@ Luo et al. 2022, Angew. Chem. Int. Ed. 61, e202200242. The aimat-lab repository
 `MOF_Synthesis_Prediction` was inspected and holds mostly machine-learning feature dumps
 (`RAC_features`, `Fingerprint_features`), not a clean DOI-indexed record table. Still being
 scouted.
+
+## Model set for the experimental grid (decided 2026-08-31)
+
+| Role | Provider | Model | Grid cost, batched |
+|---|---|---|---|
+| Open-weight | Groq | `llama-3.3-70b-versatile` | EUR 0.00 (free tier) |
+| Commercial, cheap tier | OpenAI | `gpt-4o-mini` | EUR 0.10 |
+| Commercial, strong tier | OpenAI | `gpt-4o` | EUR 1.62 |
+
+Total about **EUR 1.72** for 1,200 LLM calls (100 gold passages x 4 prompting strategies x
+3 models), plus the free rule-based baseline.
+
+**Why two OpenAI tiers rather than two vendors.** Pairing gpt-4o-mini with gpt-4o buys a
+cost-versus-accuracy curve inside one vendor, which answers "does the cheap model lose much"
+directly and is the question with practical consequences for anyone who would reuse this
+pipeline. A second vendor at a similar price point would add another dot at roughly the same
+place on that curve for about EUR 2 more. Anthropic and NVIDIA remain wired and can be added
+later if a second vendor turns out to matter for the discussion.
+
+**What this costs the study.** Research question 4 as written in the exposé compares
+open-weight against commercial APIs, which this answers. It does not compare commercial
+vendors against each other, and the report should not imply that it does.
+
+Run with `bash scripts/run_experiments.sh` (add `--smoke` first to prove the wiring on two
+passages without meaningful spend). The run is resumable on (passage, extractor), so an
+interruption costs nothing beyond the call in flight.
