@@ -85,6 +85,25 @@ def fold(text: str) -> str:
     return " ".join(text.lower().split())
 
 
+_PARENTHETICAL = re.compile(r"\s*\(([^)]*)\)\s*")
+
+
+def _strip_parenthetical(text: str) -> list[str]:
+    """Return the candidate surface forms hidden inside "full name (ABBREV)".
+
+    Papers introduce a reagent once as "dimethylformamide (DMF)" and then use either half
+    interchangeably. An extractor may return the full string while the annotator wrote only
+    the abbreviation, or the reverse. Treating those as different chemicals measures
+    typography rather than extraction, so both halves are offered as candidates.
+
+    This is a surface-form rule, not a chemical inference: it never merges two names that
+    were not already written as the same reagent in the same breath.
+    """
+    inner = _PARENTHETICAL.findall(text)
+    outer = _PARENTHETICAL.sub(" ", text).strip()
+    return [c for c in ([text, outer] + inner) if c.strip()]
+
+
 def normalize_chemical(name: str) -> str:
     """Canonical form of a chemical or MOF name, for equality comparison and node keys.
 
@@ -102,6 +121,15 @@ def normalize_chemical(name: str) -> str:
     squeezed = _PUNCT.sub(" ", folded).strip()
     if squeezed in SYNONYMS:
         return SYNONYMS[squeezed]
+    # "dimethylformamide (DMF)" resolves through either half, whichever the synonym table
+    # knows. The full string is tried first so an unparenthesised name is unaffected.
+    for candidate in _strip_parenthetical(folded)[1:]:
+        c = candidate.strip()
+        if c in SYNONYMS:
+            return SYNONYMS[c]
+        c2 = _PUNCT.sub(" ", c).strip()
+        if c2 in SYNONYMS:
+            return SYNONYMS[c2]
     return folded
 
 
