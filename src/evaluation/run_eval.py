@@ -9,13 +9,13 @@ from __future__ import annotations
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import typer
 from loguru import logger
 
 from src.evaluation.metrics import evaluate
-from src.extraction.extractor_base import Entity, Triple
+from src.extraction.extractor_base import Entity, EntityType, Triple
 
 app = typer.Typer(add_completion=False)
 
@@ -25,7 +25,14 @@ RESULTS = REPO / "data" / "processed" / "results_gold.jsonl"
 
 
 def _entity(etype: str, name: str, span: Any) -> Entity:
-    return Entity(type=etype, name=name, span=tuple(span) if span else None)
+    """Build an Entity from stored JSON.
+
+    The cast is deliberate. Entity.type is a Literal, but these values come from files on
+    disk, so the type cannot be proven statically. Validating instead of casting would be
+    wrong here: an out-of-ontology type in stored data is a finding the evaluation should
+    surface through schema_violations, not an exception that stops the scoring run.
+    """
+    return Entity(type=cast("EntityType", etype), name=name, span=tuple(span) if span else None)
 
 
 def load_gold(path: Path = GOLD) -> list[Triple]:

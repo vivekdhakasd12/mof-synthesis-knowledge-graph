@@ -62,6 +62,12 @@ from src.extraction.extractor_base import (
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PROMPT_DIR = REPO_ROOT / "configs" / "prompts"
+
+# Rate-limit retry policy. Free tiers throttle by tokens per minute and recover in seconds,
+# so waiting is nearly always correct and giving up nearly always loses real data.
+RETRY_MAX_ATTEMPTS = 6
+RETRY_BASE_DELAY_S = 2.0
+RETRY_MAX_DELAY_S = 65.0
 ONTOLOGY_PATH = REPO_ROOT / "configs" / "ontology.json"
 
 # Strategy name -> template file stem. The strategy name is what appears in the results
@@ -587,6 +593,49 @@ class LLMExtractor(Extractor):
             max_tokens=self.max_tokens,
         )
 
+    def _generate_with_retry(self, prompt: str) -> LLMResponse:
+        """Call the provider, waiting out rate limits instead of discarding the passage.
+
+        Free tiers throttle by tokens per minute, and the provider tells you exactly how
+        long to wait: Groq answers a 429 with "Please try again in 2.34s" while enforcing
+        8,000 tokens per minute. Treating that as a permanent failure threw away 76 of 100
+        passages in one run and would have been reported as an open-weight model scoring
+        zero, which is a false result rather than a slow one.
+
+        The wait is read from the provider's own message where present, so the pacing is
+        theirs rather than a guess, with exponential backoff as the fallback. Only a
+        genuinely persistent failure is surfaced to the caller.
+        """
+        delay = RETRY_BASE_DELAY_S
+        last: Exception | None = None
+        for attempt in range(RETRY_MAX_ATTEMPTS):
+            try:
+                return self.client.generate(
+                    prompt,
+                    model=self.model,
+                    temperature=self.temperature,
+                    max_tokens=self.max_tokens,
+                )
+            except Exception as exc:
+                last = exc
+                text = str(exc)
+                is_rate_limit = "429" in text or "rate_limit" in text.lower()
+                if not is_rate_limit or attempt == RETRY_MAX_ATTEMPTS - 1:
+                    raise
+                match = re.search(r"try again in ([0-9.]+)s", text)
+                wait = float(match.group(1)) + 0.5 if match else delay
+                wait = min(wait, RETRY_MAX_DELAY_S)
+                logger.info(
+                    "{}: rate limited, waiting {:.1f}s (attempt {} of {})",
+                    self.name,
+                    wait,
+                    attempt + 1,
+                    RETRY_MAX_ATTEMPTS,
+                )
+                time.sleep(wait)
+                delay = min(delay * 2, RETRY_MAX_DELAY_S)
+        raise last if last else RuntimeError("retry loop exited without a result")
+
     def extract(
         self,
         passage: str,
@@ -618,12 +667,7 @@ class LLMExtractor(Extractor):
 
             call_started = time.perf_counter()
             try:
-                response = self.client.generate(
-                    prompt,
-                    model=self.model,
-                    temperature=self.temperature,
-                    max_tokens=self.max_tokens,
-                )
+                response = self._generate_with_retry(prompt)
             except Exception as exc:
                 # A provider outage, a rate limit or a missing key must become a recorded
                 # failure for this passage, not the end of a batch of several hundred.
