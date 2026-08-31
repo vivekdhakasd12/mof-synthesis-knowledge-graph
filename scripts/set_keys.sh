@@ -24,11 +24,30 @@ set_key() {
   echo "  $name set (${#value} chars)"
 }
 
-echo "Paste each key and press Return. Input is hidden. Empty input keeps the current value."
+# Read a secret without depending on /dev/tty.
+#
+# The obvious implementation reads from /dev/tty so the prompt still works when stdin is
+# redirected. That breaks with "Device not configured" anywhere there is no controlling
+# terminal, which is precisely where a stuck user ends up, and the failure looks like a
+# broken script rather than a wrong environment. Keying off whether stdin is a terminal
+# works in both places: hidden input in a real shell, piped input everywhere else.
+read_secret() {
+  local prompt="$1" __var="$2" val=""
+  if [ -t 0 ]; then
+    printf '%s: ' "$prompt"
+    IFS= read -rs val || true
+    printf '\n'
+  else
+    printf '%s (reading from stdin, input is NOT hidden): ' "$prompt"
+    IFS= read -r val || true
+    printf '\n'
+  fi
+  printf -v "$__var" '%s' "$val"
+}
+
+echo "Paste each key and press Return. Empty input keeps the current value."
 for name in OPENAI_API_KEY ANTHROPIC_API_KEY GROQ_API_KEY; do
-  printf '%s: ' "$name"
-  IFS= read -rs value < /dev/tty
-  printf '\n'
+  read_secret "$name" value
   set_key "$name" "$value"
   unset value
 done
