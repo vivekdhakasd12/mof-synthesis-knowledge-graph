@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+import pytest
 from sklearn.metrics import precision_recall_fscore_support
 
 from src.evaluation.metrics import (
@@ -600,3 +601,66 @@ def test_agreement_result_is_structured_data():
     frame = result.to_frame()
     assert list(frame["field"])[-1] == "overall"
     assert json.loads(json.dumps(result.as_dict()))["agreement_rate"] == 0.5
+
+
+# ---------------------------------------------------------------------------------------
+# Subject-agnostic scoring for IN_SOLVENT and AT_CONDITION
+# ---------------------------------------------------------------------------------------
+
+
+def _t(subject_type, subject_name, relation, object_type, object_name, pid="p1"):
+    return Triple(
+        subject=Entity(type=subject_type, name=subject_name),
+        relation=relation,
+        object=Entity(type=object_type, name=object_name),
+        evidence="evidence sentence",
+        source_paper_id=pid,
+        source_section="Experimental",
+    )
+
+
+def test_subject_agnostic_credits_a_correct_object_despite_a_wrong_gold_subject():
+    """The case this concession exists for.
+
+    The annotation tool wrote the MOF's name into the subject of every IN_SOLVENT and
+    AT_CONDITION gold triple. Scoring that subject literally marks a model wrong for
+    correctly naming the synthesis route, which would invert the result on two of the four
+    relations with usable support.
+    """
+    gold = [_t("SynthesisMethod", "NU-1000", "IN_SOLVENT", "Solvent", "DMF")]
+    pred = [_t("SynthesisMethod", "solvothermal", "IN_SOLVENT", "Solvent", "DMF")]
+    assert evaluate(pred, gold).per_field["IN_SOLVENT"].f1 == pytest.approx(1.0)
+
+
+def test_disabling_the_concession_reproduces_the_penalty():
+    """Kept as the control: it documents the size of the artefact being removed."""
+    gold = [_t("SynthesisMethod", "NU-1000", "IN_SOLVENT", "Solvent", "DMF")]
+    pred = [_t("SynthesisMethod", "solvothermal", "IN_SOLVENT", "Solvent", "DMF")]
+    strict = evaluate(pred, gold, subject_agnostic=frozenset())
+    assert strict.per_field["IN_SOLVENT"].f1 == pytest.approx(0.0)
+
+
+def test_subject_agnostic_does_not_make_the_object_lax():
+    """Ignoring the subject must not turn into ignoring correctness."""
+    gold = [_t("SynthesisMethod", "NU-1000", "IN_SOLVENT", "Solvent", "DMF")]
+    wrong = [_t("SynthesisMethod", "solvothermal", "IN_SOLVENT", "Solvent", "ethanol")]
+    assert evaluate(wrong, gold).per_field["IN_SOLVENT"].f1 == pytest.approx(0.0)
+
+
+def test_other_relations_still_require_the_subject_to_match():
+    """The concession is scoped to two relations and must not leak into the others."""
+    gold = [_t("MOF", "ZIF-8", "USES_LINKER", "OrganicLinker", "2-methylimidazole")]
+    pred = [_t("MOF", "UiO-66", "USES_LINKER", "OrganicLinker", "2-methylimidazole")]
+    assert evaluate(pred, gold).per_field["USES_LINKER"].f1 == pytest.approx(0.0)
+
+
+def test_the_concession_is_recorded_on_the_result():
+    """A methodological concession that a report can forget to mention is a hazard."""
+    gold = [_t("SynthesisMethod", "NU-1000", "AT_CONDITION", "Condition", "120 C")]
+    pred = [_t("SynthesisMethod", "solvothermal", "AT_CONDITION", "Condition", "120 C")]
+    result = evaluate(pred, gold)
+    # The configured set is recorded, not merely the relations this run happened to
+    # exercise. A reader must be able to see that the concession was in force for both
+    # relations even when the gold standard contained triples for only one of them.
+    assert result.subject_agnostic_relations == ("AT_CONDITION", "IN_SOLVENT")
+    assert evaluate(pred, gold, subject_agnostic=frozenset()).subject_agnostic_relations == ()

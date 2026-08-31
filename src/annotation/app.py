@@ -64,6 +64,7 @@ def _init_state() -> None:
     st.session_state.n_loaded = len(passages)
     st.session_state.idx = 0
     st.session_state.annotator = os.environ.get("GOLD_ANNOTATOR", "human")
+    st.session_state.form_key = 0
 
 
 def _current() -> core.Passage:
@@ -166,27 +167,44 @@ def _passage_header(passage: core.Passage) -> None:
 
 def _triple_form(passage: core.Passage, existing: list[core.GoldTriple]) -> None:
     st.markdown("#### Add a triple")
-    relation = st.selectbox("1. Relation", core.allowed_relations(), key="relation")
-    subject_type = st.selectbox("2. Subject type", core.allowed_subject_types(relation))
-    object_type = st.selectbox("3. Object type", core.allowed_object_types(relation))
+    fk = st.session_state.form_key
+    relation = st.selectbox("1. Relation", core.allowed_relations(), key=f"relation-{fk}")
+    subject_type = st.selectbox(
+        "2. Subject type", core.allowed_subject_types(relation), key=f"subject_type-{fk}"
+    )
+    object_type = st.selectbox(
+        "3. Object type", core.allowed_object_types(relation), key=f"object_type-{fk}"
+    )
     st.caption(f"{subject_type} -{relation}-> {object_type} (fixed by the ontology)")
 
     col_s, col_o = st.columns(2)
-    subject_name = col_s.text_input(f"4. {subject_type} as written in the passage", key="subject")
-    object_name = col_o.text_input(f"5. {object_type} as written in the passage", key="object")
+    # The widget key includes the entity type on purpose. Streamlit keeps a text input's
+    # value keyed by its key alone, so with a type-independent key the box silently retains
+    # what was typed for the previous relation while its label changes underneath. That trap
+    # corrupted 68 of the first 138 gold triples: a MOF name entered for USES_PRECURSOR
+    # survived a switch to IN_SOLVENT and was saved as the synthesis method's name. Binding
+    # the key to the type forces a fresh, empty field whenever the expected entity changes.
+    subject_name = col_s.text_input(
+        f"4. {subject_type} as written in the passage", key=f"subject-{fk}-{subject_type}"
+    )
+    object_name = col_o.text_input(
+        f"5. {object_type} as written in the passage", key=f"object-{fk}-{object_type}"
+    )
 
     subject_span = core.find_span(passage.text, subject_name)
     object_span = core.find_span(passage.text, object_name)
     col_s.caption(f"span {subject_span}" if subject_span else "not found verbatim (span omitted)")
     col_o.caption(f"span {object_span}" if object_span else "not found verbatim (span omitted)")
 
-    if st.button("Copy the sentence containing the subject into evidence"):
-        st.session_state.evidence = core.sentence_containing(passage.text, subject_name)
+    if st.button("Copy the sentence containing the subject into evidence", key=f"copy_ev-{fk}"):
+        st.session_state[f"evidence-{fk}"] = core.sentence_containing(passage.text, subject_name)
         st.rerun()
-    evidence = st.text_area("6. Evidence sentence, verbatim from the passage", key="evidence")
-    confidence = st.radio("7. Confidence", ("high", "medium", "low"), horizontal=True)
+    evidence = st.text_area("6. Evidence sentence, verbatim from the passage", key=f"evidence-{fk}")
+    confidence = st.radio(
+        "7. Confidence", ("high", "medium", "low"), horizontal=True, key=f"confidence-{fk}"
+    )
 
-    if st.button("Add triple", type="primary"):
+    if st.button("Add triple", type="primary", key=f"add-{fk}"):
         triple = core.GoldTriple(
             subject_type=subject_type,
             subject_name=subject_name.strip(),
@@ -199,9 +217,7 @@ def _triple_form(passage: core.Passage, existing: list[core.GoldTriple]) -> None
             confidence=confidence,
         )
         _save(passage, [*existing, triple], status="annotated")
-        st.session_state.subject = ""
-        st.session_state.object = ""
-        st.session_state.evidence = ""
+        st.session_state.form_key += 1
         st.rerun()
 
 

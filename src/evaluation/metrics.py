@@ -95,6 +95,28 @@ SCORED_RELATIONS: tuple[RelationType, ...] = (
 #: area" versus "Langmuir surface area"), which is correct because those are different
 #: measurements. 0.6 is the largest threshold that keeps the first family and the
 #: smallest that rejects the second.
+# Relations scored on the object alone, ignoring the identity of the subject.
+#
+# This is a declared evaluation decision, not a convenience, and the methodology chapter
+# must state it. The ontology routes solvents and conditions through a synthesis method
+# (SynthesisMethod -[IN_SOLVENT]-> Solvent), so the subject of those two relations is a
+# connector rather than a claim: what the extraction is actually asserting is "this
+# synthesis used DMF at 120 C". Within a single passage there is normally one synthesis, so
+# the connector carries no information that the passage boundary does not already carry.
+#
+# The concrete reason it is switched on here: the annotation tool had a bug in which a text
+# field kept its previous value when the relation changed, so the gold standard records the
+# MOF's name in the subject of every IN_SOLVENT and AT_CONDITION triple (68 of the first 138
+# triples). Scoring those subjects literally would mark a model WRONG for correctly
+# answering "solvothermal", inverting the result on two of the four relations that have
+# usable support. Ignoring the subject for exactly these two relations removes that
+# artefact without inventing any gold data.
+#
+# Cost, stated plainly: this evaluation cannot show whether a model attaches a solvent to
+# the right synthesis when a passage describes more than one. SYNTHESIZED_BY, which would
+# have tested method identification directly, has a support of 1 and is unusable anyway.
+SUBJECT_AGNOSTIC_RELATIONS: frozenset[str] = frozenset({"IN_SOLVENT", "AT_CONDITION"})
+
 RELAXED_THRESHOLD: float = 0.6
 
 #: Generic process nouns dropped before relaxed token comparison. These carry no
@@ -237,6 +259,7 @@ def triple_similarity(
     *,
     mode: MatchMode = "exact",
     threshold: float = RELAXED_THRESHOLD,
+    subject_agnostic: frozenset[str] = SUBJECT_AGNOSTIC_RELATIONS,
 ) -> float:
     """Similarity of a predicted triple to a gold triple; 0.0 means no match.
 
@@ -248,6 +271,11 @@ def triple_similarity(
     """
     if predicted.relation != gold.relation:
         return 0.0
+    if predicted.relation in subject_agnostic:
+        # Object-only scoring: see SUBJECT_AGNOSTIC_RELATIONS for the reasoning. The subject
+        # is treated as satisfied so that assignment ranks on the object alone.
+        obj_only = entity_similarity(predicted.object, gold.object, mode=mode, threshold=threshold)
+        return obj_only
     subj = entity_similarity(predicted.subject, gold.subject, mode=mode, threshold=threshold)
     if subj == 0.0:
         return 0.0
@@ -276,6 +304,7 @@ def greedy_one_to_one(
     *,
     mode: MatchMode = "exact",
     threshold: float = RELAXED_THRESHOLD,
+    subject_agnostic: frozenset[str] = SUBJECT_AGNOSTIC_RELATIONS,
 ) -> tuple[list[MatchedPair], list[Triple], list[Triple]]:
     """Assign predictions to gold triples one-to-one; return (matches, unmatched pred,
     unmatched gold).
@@ -289,7 +318,9 @@ def greedy_one_to_one(
     candidates: list[tuple[float, int, int]] = []
     for pi, pred in enumerate(predicted):
         for gi, ref in enumerate(gold):
-            score = triple_similarity(pred, ref, mode=mode, threshold=threshold)
+            score = triple_similarity(
+                pred, ref, mode=mode, threshold=threshold, subject_agnostic=subject_agnostic
+            )
             if score > 0.0:
                 candidates.append((-score, gi, pi))
     candidates.sort()
@@ -414,6 +445,9 @@ class EvaluationResult:
     errors: dict[str, FieldErrors]
     skipped_relations: dict[str, int] = field(default_factory=dict)
     schema_violations: list[Triple] = field(default_factory=list)
+    # Relations that were scored on the object alone. Carried on the result so that any
+    # table generated from it can state the concession rather than quietly benefit from it.
+    subject_agnostic_relations: tuple[str, ...] = ()
 
     def to_frame(self) -> pd.DataFrame:
         """Per-field table plus micro and macro rows, in the report's column order."""
@@ -579,6 +613,7 @@ def evaluate(
     threshold: float = RELAXED_THRESHOLD,
     relations: Sequence[str] = SCORED_RELATIONS,
     key: Callable[[Triple], tuple[str | None, str | None]] = passage_key,
+    subject_agnostic: frozenset[str] = SUBJECT_AGNOSTIC_RELATIONS,
 ) -> EvaluationResult:
     """Score predicted triples against gold triples, per field and in aggregate.
 
@@ -625,7 +660,9 @@ def evaluate(
             golds = gold_groups.get((pkey, rel), [])
             if not preds and not golds:
                 continue
-            matches, fps, fns = greedy_one_to_one(preds, golds, mode=mode, threshold=threshold)
+            matches, fps, fns = greedy_one_to_one(
+                preds, golds, mode=mode, threshold=threshold, subject_agnostic=subject_agnostic
+            )
             counts[rel][0] += len(matches)
             counts[rel][1] += len(fps)
             counts[rel][2] += len(fns)
@@ -682,6 +719,10 @@ def evaluate(
         errors=errors,
         skipped_relations=skipped,
         schema_violations=schema_violations(pred_scored),
+        # The configured set intersected with the relations in scope for this run. It is
+        # deliberately not narrowed to the relations the gold standard happened to contain:
+        # a reader needs to see that the concession was in force, not only where it bit.
+        subject_agnostic_relations=tuple(sorted(subject_agnostic & set(scored))),
     )
 
 

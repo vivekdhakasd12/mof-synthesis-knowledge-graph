@@ -87,3 +87,80 @@ AT_CONDITION and IN_SOLVENT, where local patterns already work well.
   source and is scored with lowered confidence rather than hidden.
 - Conditions belonging to drying, activation or centrifugation are currently emitted as
   synthesis conditions. These are real false positives, left visible rather than filtered.
+
+# Gold standard: validation and one declared evaluation concession
+
+Validated 2026-08-31 against `data/annotations/gold.jsonl` (100 records, hand annotated).
+
+## What the file contains
+
+| Check | Result |
+|---|---|
+| Records | 100, all valid JSON, correct schema |
+| Duplicate passage ids | 0 |
+| Passage ids matching the real worklist | 100 of 100 |
+| Triples | 138 |
+| Ontology-invalid triples (type level) | 0 |
+| Triples missing evidence or an entity name | 0 |
+| Control passages annotated | 10 of 10 |
+
+Status split: 32 passages carry synthesis records, 68 were marked as containing none.
+
+## Measured: the pre-filter's own precision
+
+Of the 90 passages the synthesis pre-filter flagged, **32 actually contained a synthesis
+record, a precision of about 36 percent**. None of the 10 unflagged control passages
+contained synthesis content, so no miss was detected in that sample, though 10 is too small
+to put a useful bound on recall.
+
+This is exactly what the control stratum was included for. Report both numbers, and report
+the control sample size next to the recall statement so it is not read as a strong claim.
+
+## Usable relation coverage is four, not eight
+
+| Relation | Gold support | Usable |
+|---|---|---|
+| USES_PRECURSOR | 39 | yes |
+| IN_SOLVENT | 34 | yes |
+| AT_CONDITION | 34 | yes |
+| USES_LINKER | 30 | yes |
+| SYNTHESIZED_BY | 1 | no |
+| HAS_PROPERTY | 0 | no |
+| MEASURED_AT | 0 | no |
+| USED_IN | 0 | no |
+
+The results chapter must print support beside every score and must draw no conclusion about
+the bottom four. Their scarcity is itself reportable: properties and applications are rarely
+stated inside a synthesis paragraph, which is a fact about where information lives in a
+paper rather than a defect in the extractors.
+
+## The concession: IN_SOLVENT and AT_CONDITION are scored on the object alone
+
+**What happened.** The annotation tool kept a text field's previous value when the relation
+changed while its label changed underneath, a Streamlit widget-key defect. As a result every
+IN_SOLVENT and AT_CONDITION gold triple, 68 of 138, records the MOF's name in the subject
+position where the synthesis method belongs. The tool has been fixed (the field now resets
+when the expected entity type changes), but the recorded gold standard carries the artefact.
+
+**Why it could not be left alone.** Scoring those subjects literally marks a model wrong for
+correctly answering "solvothermal", because the gold says "NU-1000". That inverts the result
+on two of the four relations that have usable support.
+
+**What was done instead.** `SUBJECT_AGNOSTIC_RELATIONS` in `src/evaluation/metrics.py` scores
+these two relations on the object alone. The justification is not merely convenience: the
+ontology routes solvents and conditions through a synthesis method, so the subject is a
+connector rather than a claim, and within one passage there is normally one synthesis, so it
+carries no information the passage boundary does not already carry.
+
+**What it costs.** This evaluation cannot show whether a model attaches a solvent to the
+correct synthesis when a passage describes more than one. SYNTHESIZED_BY, which would have
+tested method identification directly, has a support of 1 and is unusable regardless.
+
+**What was deliberately not done.** The gold subjects were not corrected by a model. Filling
+them in would mean generating the ground truth used to judge the models, which is the one
+shortcut that would make every accuracy figure circular.
+
+The concession is carried on every `EvaluationResult` as `subject_agnostic_relations`, so a
+generated table states it rather than quietly benefiting from it. Tests pin all four
+behaviours: the correct object is credited, a wrong object still fails, the other relations
+still require their subject, and disabling the flag reproduces the penalty.
