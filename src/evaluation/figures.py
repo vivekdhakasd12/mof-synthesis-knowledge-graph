@@ -467,61 +467,62 @@ def fig_corpus(threshold_rows: list[tuple[float, int, int]]) -> Path:
 def fig_baseline_failure(data: dict) -> Path:
     """Why the rule baseline fails, which is the mechanism behind the headline result.
 
-    The baseline identified a MOF in 15 percent of synthesis passages. Because the ontology
-    roots five relations at the MOF node, that single failure suppresses most of what a
-    rule-based system could otherwise extract. The breakdown shows the causes are
-    coreference and generic naming, not lexicon gaps a bigger dictionary would close.
+    The baseline identified a MOF in 156 of 794 synthesis passages. Because five of the eight
+    ontology relations take MOF as their subject, that single failure suppresses most of what
+    a rule-based system could otherwise extract. The breakdown shows the causes are
+    coreference and generic naming, not lexicon gaps a larger dictionary would close.
+
+    Plain horizontal bars rather than one stacked bar: the job here is comparing four
+    magnitudes, and a stacked bar makes that comparison harder while forcing labels onto
+    hatched fills where they cannot be read.
     """
     _style()
-    fig, ax = plt.subplots(figsize=(6.4, 3.2))
     causes = [
-        "MOF named in\nthis passage",
-        "Named elsewhere\nin the paper",
-        'Generic designation\n("compound 1")',
+        "MOF named in this passage",
+        "Named elsewhere in the paper",
+        'Generic designation ("compound 1")',
         "Other",
     ]
     counts = [156, 331, 251, 794 - 156 - 331 - 251]
     colours = [PALETTE[2], PALETTE[1], PALETTE[3], PALETTE[4]]
     hatches = ["...", "\\\\\\", "xxx", "///"]
 
-    left = 0.0
-    for c, n, colour, hatch in zip(causes, counts, colours, hatches, strict=True):
-        ax.barh(
-            0,
-            n,
-            left=left,
-            height=0.5,
-            color=colour,
-            edgecolor="white",
-            linewidth=1.6,
-            hatch=hatch,
-            zorder=3,
+    fig, ax = plt.subplots(figsize=(6.6, 3.0))
+    ax.grid(True, axis="x", linewidth=0.6, alpha=0.7)
+    ax.set_axisbelow(True)
+    ys = range(len(causes))
+    ax.barh(
+        list(ys),
+        counts,
+        height=0.62,
+        color=colours,
+        edgecolor="white",
+        linewidth=1.4,
+        hatch=hatches,
+        zorder=3,
+    )
+    for y, n in zip(ys, counts, strict=True):
+        ax.annotate(
+            f"{n}  ({n / 794:.0%})",
+            (n, y),
+            xytext=(6, 0),
+            textcoords="offset points",
+            va="center",
+            fontsize=8,
+            color=INK,
         )
-        if n > 60:
-            ax.annotate(
-                f"{c}\n{n} ({n / 794:.0%})",
-                (left + n / 2, 0),
-                ha="center",
-                va="center",
-                fontsize=7.5,
-                color="white",
-                fontweight="bold",
-                linespacing=1.3,
-            )
-        left += n
 
-    ax.set_xlim(0, 794)
-    ax.set_ylim(-0.45, 0.45)
-    ax.set_yticks([])
+    ax.set_yticks(list(ys))
+    ax.set_yticklabels(causes, fontsize=8.5)
+    ax.invert_yaxis()
+    ax.set_xlim(0, 400)
     ax.set_xlabel("Synthesis passages (n = 794)")
     ax.set_title("Why the rule baseline cannot name the material")
-    for spine in ("left", "bottom"):
-        ax.spines[spine].set_visible(False)
     fig.text(
         0.01,
-        -0.06,
-        "Five of eight ontology relations take MOF as their subject, so a passage where "
-        "no MOF is identified\nyields none of them however clearly the reagents are written.",
+        -0.13,
+        "Five of the eight ontology relations take MOF as their subject, so a passage where no "
+        "MOF is identified\nyields none of them however clearly the reagents are written.",
         fontsize=7,
         color=MUTED,
     )
