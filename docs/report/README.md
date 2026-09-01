@@ -52,3 +52,23 @@ at a glance, and a schematic of the pipeline.
 Follow the exposé's approach: author in HTML, render with headless Chrome. The exposé's
 stylesheet in `docs/expose.html` can be reused for visual consistency, including the SRH
 logo and the section rules.
+
+## Figures
+
+Generated from `data/processed/evaluation.json` with `python -m src.evaluation.figures`, so
+they cannot drift from the numbers in the text. Each is written as PDF for print and PNG for
+drafts.
+
+| File | Shows | Belongs in |
+|---|---|---|
+| `figures/fig1_cost_vs_f1` | Accuracy against cost, all ten configurations | 5.4, and worth repeating in the discussion |
+| `figures/fig2_per_field_f1` | Per-field F1 for four representative extractors, with gold support on the axis | 5.3 |
+| `figures/fig3_prompting_strategies` | Prompting strategy by commercial model | 5.4 |
+
+**Design constraints these follow, and any new figure must too.** Colour never carries
+identity alone: every series also has a marker shape or a hatch pattern, so the figures
+survive greyscale printing and colourblind readers. The palette is the Okabe-Ito set in an
+order checked with a validator, worst adjacent colour-vision separation Delta E 11.0
+against a target of 8.0. No figure uses two y-axes. Gold support is printed on the axis of
+the per-field chart rather than hidden in the caption, because a reader must not compare a
+field backed by 39 annotations against one backed by 30 without seeing it.
