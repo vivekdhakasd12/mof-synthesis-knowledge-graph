@@ -58,6 +58,18 @@ one costing a forty-seventh as much. Free-tier models are plotted at zero margin
 Marker shape encodes model family in addition to colour, so the figure survives greyscale
 reproduction.
 
+F1 collapses precision and recall into one number, which hides whether a configuration is
+cautious or scattergun. Plotting the two axes separately against iso-F1 contours makes that
+visible:
+
+![Precision against recall for all ten configurations, with iso-F1 contours](figures/fig4_precision_recall.png)
+
+**Figure 4.** Precision against recall. Every language-model configuration sits above and to
+the right of the rule baseline on both axes, not only on the combined score. Recall varies
+more across the ten configurations than precision does, which is the more actionable
+observation for anyone tuning a prompt: the strategies mostly differ in how much they find,
+less in how often what they find is right.
+
 ## 5.3 Per-field results (RQ1)
 
 For the strongest configuration, gpt-4o-mini with schema-guided prompting:

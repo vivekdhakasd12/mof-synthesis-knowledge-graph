@@ -80,6 +80,13 @@ The threshold is a declared choice, not an accident. Its sensitivity is:
 | 0.55 | 485 | 190 |
 | 0.65 | 268 | 149 |
 
+![Corpus funnel and synthesis-score threshold sensitivity](figures/fig5_corpus_and_threshold.png)
+
+**Figure 5.** Left, the corpus funnel from collection to the gold standard, on a log scale
+because each stage is roughly an order of magnitude smaller than the last. Right, the same
+threshold sensitivity as the table, shown as a curve so the chosen cutoff of 0.45 can be seen
+sitting on the shoulder of the curve rather than at an arbitrary point on a steep slope.
+
 ## 3.4 Gold standard
 
 **Provenance of the annotations.** The gold standard is the instrument against which the
