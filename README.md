@@ -99,4 +99,13 @@ per (passage, extractor) so an interrupted run is never billed twice.
 
 ## Licence
 
-Code: MIT. Corpus: open-access papers under their respective Creative Commons licences.
+**Code and annotations: MIT.**
+
+**Quoted paper text is not covered by that licence.** `data/annotations/gold.jsonl` embeds
+verbatim excerpts from third-party open-access papers (71 CC BY, 19 CC BY-NC-ND, 10 CC BY-NC),
+each carrying its own `source_doi`, `source_title`, `source_license` and `source_url` so it can
+be traced and credited. Anyone reusing that file must respect the licence of the specific paper
+an excerpt came from. See `data/annotations/README.md`.
+
+The corpus itself (`data/raw/`, `data/processed/`) is not redistributed here and is rebuilt
+from Europe PMC by `src/ingestion/build_corpus.py`.
