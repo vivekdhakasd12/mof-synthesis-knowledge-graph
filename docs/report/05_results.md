@@ -50,6 +50,14 @@ Relaxed matching, micro-averaged over all scored relations:
 Every language-model configuration outperforms the rule-based baseline. The weakest language
 model configuration scores 0.191 against the baseline's 0.112.
 
+![Accuracy against cost for all ten configurations](figures/fig1_cost_vs_f1.png)
+
+**Figure 1.** Accuracy against cost. The relationship is the finding: the strongest
+configuration sits at the far left, and the most expensive configuration scores lower than
+one costing a forty-seventh as much. Free-tier models are plotted at zero marginal cost.
+Marker shape encodes model family in addition to colour, so the figure survives greyscale
+reproduction.
+
 ## 5.3 Per-field results (RQ1)
 
 For the strongest configuration, gpt-4o-mini with schema-guided prompting:
@@ -69,6 +77,12 @@ positives, which is why HAS_PROPERTY shows 21 false positives against zero suppo
 Excluding AT_CONDITION, whose behaviour is explained in Section 5.5, the best configuration
 averages approximately 0.53 across the three remaining fields.
 
+![Per-field F1 for four representative extractors](figures/fig2_per_field_f1.png)
+
+**Figure 2.** Per-field F1 for four representative configurations, with the number of gold
+triples printed on each axis label. Support is shown in the figure rather than only in the
+caption so that fields backed by different amounts of evidence are not compared silently.
+
 ## 5.4 Prompting strategies (RQ2) and open weight against commercial (RQ4)
 
 **Prompting strategies**, commercial models, all four strategies complete:
@@ -87,6 +101,12 @@ dominates.
 Few-shot is the weakest strategy on both models despite having by far the most expensive
 prompt, 4,054 template tokens against 652 for schema-guided. The worked examples cost
 roughly six times more per call and bought nothing measurable here.
+
+![Prompting strategy by commercial model](figures/fig3_prompting_strategies.png)
+
+**Figure 3.** Prompting strategy by model. Only the two commercial models appear: just one of
+the open-weight model's four strategies completed within the free-tier token cap, and placing
+a single point beside two complete sets would invite a comparison the data cannot support.
 
 **Open weight against commercial**, compared like for like on zero-shot, the one strategy
 where all three models have complete coverage, so that model and strategy are not confounded:
