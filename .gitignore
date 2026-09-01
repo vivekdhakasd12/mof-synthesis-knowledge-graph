@@ -62,6 +62,10 @@ llm_cache/
 *.docx
 !docs/*.docx
 !docs/*.pdf
+# The rendered report is a deliverable, not a build artefact: it is what a reader
+# arriving at this repository actually wants to open.
+!docs/report/*.pdf
+!docs/report/*.html
 neo4j_data/
 neo4j_logs/
 
