@@ -508,7 +508,172 @@ a claim, and it is carried on every evaluation result so that a generated table 
 What it costs is that this study cannot show whether a model attaches a solvent to the correct
 synthesis when a passage describes several.</p>
 </section>
-<section class="chapter missing"><h1>4. Implementation</h1><p class="placeholder">This chapter has not been written yet. See <code>docs/report/README.md</code> for what it needs to cover.</p></section>
+<section class="chapter"><h1>4. Implementation</h1><p>The system is roughly 7,100 lines of Python across twenty modules, covered by 199 tests. This
+chapter describes the parts whose design was load bearing, and states the reasoning where a
+different choice was available. Implementation detail that follows obviously from Chapter 3 is
+omitted.</p>
+<h2>4.1 Architecture</h2>
+<p>The pipeline is a sequence of stages, each writing a file the next stage reads:</p>
+<pre><code>Europe PMC  -&gt;  corpus.jsonl  -&gt;  passages.jsonl  -&gt;  results.jsonl  -&gt;  evaluation.json
+                                        |                   |
+                                   gold.jsonl           Neo4j graph
+</code></pre>
+<p>Stages communicate through JSON Lines on disk rather than in-process objects. That costs some
+speed and buys three things that mattered more: any stage can be rerun without repeating the
+ones before it, intermediate state can be inspected with ordinary command-line tools when a
+result looks wrong, and a stage that crashes leaves everything before it intact. During
+development every one of those properties was used.</p>
+<table>
+<thead>
+<tr>
+  <th>Package</th>
+  <th>Responsibility</th>
+  <th>Lines</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>src/ingestion</code></td>
+  <td>Europe PMC access, JATS parsing, passage segmentation</td>
+  <td>980</td>
+</tr>
+<tr>
+  <td><code>src/extraction</code></td>
+  <td>Extractor interface, rule baseline, language models, response cache</td>
+  <td>2,221</td>
+</tr>
+<tr>
+  <td><code>src/evaluation</code></td>
+  <td>Per-field metrics, evaluation runner, figures</td>
+  <td>1,764</td>
+</tr>
+<tr>
+  <td><code>src/kg</code></td>
+  <td>Neo4j schema, provenance-writing loader, named research queries</td>
+  <td>462</td>
+</tr>
+<tr>
+  <td><code>src/annotation</code></td>
+  <td>Gold standard annotation tool</td>
+  <td>1,169</td>
+</tr>
+<tr>
+  <td><code>src/normalize.py</code></td>
+  <td>Shared chemical-name normalisation</td>
+  <td>180</td>
+</tr>
+<tr>
+  <td><code>src/pipeline.py</code></td>
+  <td>Resumable experiment runner</td>
+  <td>288</td>
+</tr>
+</tbody>
+</table>
+<h2>4.2 The unified extractor interface</h2>
+<p>The single most consequential design decision is that every extraction strategy, rule-based
+and language-model alike, implements one interface and returns the same shape:</p>
+<pre><code class="language-python">class Extractor(ABC):
+    name: str
+    @abstractmethod
+    def extract(self, passage: str, *, paper_id: str | None = None,
+                section: str | None = None) -&gt; ExtractionResult: ...
+</code></pre>
+<p><code>ExtractionResult</code> carries the extracted triples together with <code>cost_usd</code>, <code>latency_ms</code> and
+<code>errors</code>. Two properties of this contract shaped everything downstream.</p>
+<p><strong>Extractors must not raise.</strong> A provider outage, a malformed response or an unparseable
+passage becomes an entry in <code>errors</code>, never an exception. The reason is operational: a run is
+1,300 sequential calls over roughly an hour, and losing all of it to one awkward passage is
+unacceptable. The runner still wraps every call in a guard, and a raised exception is recorded
+as a contract violation, which is itself a reportable finding rather than a crash.</p>
+<p><strong>Cost and latency belong to the result, not to a separate log.</strong> Because they travel with the
+extraction, accuracy, cost and latency can be joined without reconciling two sources, which is
+what made the cost-against-accuracy analysis in Chapter 5 straightforward rather than a data
+integration exercise.</p>
+<h2>4.3 Ingestion</h2>
+<p><code>europepmc.py</code> queries the open-access subset and fetches JATS full text, caching every
+response to disk so a paper is never downloaded twice. <code>parse.py</code> converts JATS into labelled
+sections using namespace-agnostic XPath, because JATS documents may or may not declare a
+namespace, and flattens inline markup with <code>itertext()</code> so that italics or formulae inside a
+sentence do not fragment it.</p>
+<p><code>segment.py</code> splits sections into passages with character offsets preserved and assigns each a
+deterministic identifier derived from paper, section, section occurrence and index. Determinism
+is not cosmetic: the gold standard references these identifiers, so a corpus rebuild that
+renumbered passages would silently invalidate every annotation.</p>
+<p>That property was tested rather than assumed, and the test failed. Seventeen identifiers
+collided, which traced not to the segmenter but to the collector: Europe PMC had returned one
+paper on two cursor pages and nothing deduplicated it. Deduplication by PMCID and DOI was added
+at collection.</p>
+<h2>4.4 Extraction</h2>
+<p><strong>The rule-based baseline</strong> (<code>rule_based.py</code>, 1,040 lines) keeps its entire vocabulary in one
+marked block so the lexicon can be cited and extended without reading the control flow. Entity
+names are the literal substring of the passage, so <code>passage[start:end] == name</code> holds and every
+span is a genuine provenance pointer; canonical forms are produced on demand by the shared
+normaliser rather than by rewriting the name, which would break that correspondence.</p>
+<p>It attempts implicit synthesis routes rather than skipping them. An organic solvent with a
+temperature above a documented threshold and no route word anywhere in the passage is emitted
+as &quot;solvothermal&quot; with low confidence and a null span, the null span marking it as inferred so
+that explicit and inferred routes can be scored separately. Skipping these would have flattered
+the baseline's precision and understated its recall, which would have made the comparison this
+project exists to draw less honest rather than more.</p>
+<p><strong>The language-model extractors</strong> (<code>llm_extractor.py</code>, 861 lines) separate the provider from
+the strategy. An <code>LLMClient</code> protocol has one method, so OpenAI, Anthropic, Groq and NVIDIA
+differ only in a base URL and an environment variable, and tests inject a deterministic fake
+client. An autouse fixture severs <code>socket.socket</code> for the whole offline suite, so &quot;these tests
+do not touch the network&quot; is enforced by the suite rather than asserted in a comment.</p>
+<p>Response parsing is deliberately defensive. Models wrap JSON in prose or code fences, emit
+trailing commas, return an object where a list was requested, and occasionally invent relation
+types. Everything recoverable is recovered; everything else is recorded. Triples whose endpoints
+violate the ontology are dropped with the reason logged, which turns model misbehaviour into
+the error taxonomy of Chapter 5 rather than into silent contamination of the results.</p>
+<p>One defect found here is worth recording because of what it would have cost. An empty
+completion was originally treated as a successful call that found nothing. A reasoning model
+that spends its entire token budget thinking returns exactly that, so a model failing every
+call was indistinguishable from a model reading carefully and finding nothing. In the
+open-weight comparison that would have appeared as a genuine result. An empty completion is now
+an error naming the token count and the likely cause.</p>
+<h2>4.5 Cost control</h2>
+<p>Two mechanisms make repeated experimentation affordable, which for a self-funded project is a
+functional requirement rather than an optimisation.</p>
+<p><strong>The response cache</strong> (<code>cache.py</code>) keys on a hash of provider, model, prompt template name and
+version, strategy, passage text, temperature and maximum tokens. The template <em>version</em> is part
+of the key so that editing a prompt correctly invalidates its cached answers instead of
+silently mixing responses to two different prompts. The key function takes keyword arguments
+only: a positional call site that swapped model and strategy would produce a plausible but
+wrong key, and that failure would surface as inexplicable cache misses rather than as an error.</p>
+<p><strong>The runner</strong> (<code>pipeline.py</code>) is resumable on <code>(passage_id, extractor)</code> and flushes after every
+row, so an interrupted run loses at most the call in flight and a rerun re-bills nothing. It
+also retries on rate limits using the delay the provider itself states, after an early run
+discarded 76 of 100 passages by treating a two-second throttle as a permanent failure.</p>
+<h2>4.6 Knowledge graph</h2>
+<p><code>kg/loader.py</code> writes provenance as structure. Every entity receives a <code>MENTIONED_IN</code> edge to
+its source paper carrying section and evidence sentence, and every relation edge carries the
+evidence, extractor and confidence. Loading is idempotent, using <code>MERGE</code> on a normalised key
+rather than <code>CREATE</code> on the surface form, so a reproducibility rerun cannot inflate the graph
+statistics reported in this document.</p>
+<p><code>kg/queries.py</code> holds the research queries as named constants rather than leaving them to be
+typed into a browser, because they are evidence for a research question and must be rerunnable.
+One of them, <code>provenance_violations</code>, returns any entity lacking a link to a source paper. It is
+included specifically so the central integrity claim of this project can be checked by a reader
+rather than trusted. It returns zero rows.</p>
+<h2>4.7 Evaluation</h2>
+<p><code>evaluation/metrics.py</code> implements per-field scoring with greedy one-to-one assignment, so a
+duplicate-emitting extractor cannot match one gold triple repeatedly and inflate its precision.
+Matching is built on the same <code>src/normalize.py</code> used by the graph loader. That sharing is the
+point: if the evaluation decided that <code>H3BTC</code> matched <code>trimesic acid</code> while the loader created
+two separate nodes, the reported accuracy and the delivered artefact would disagree about what
+the data contains.</p>
+<p><code>evaluation/figures.py</code> generates every figure from <code>evaluation.json</code>, so no number in a chart
+is transcribed by hand and none can drift from the table beside it.</p>
+<h2>4.8 Reproducibility and quality gates</h2>
+<p>Python is pinned to 3.11 (a spaCy dependency has no 3.13 wheels). Neo4j runs from
+<code>docker-compose.yml</code>, so the database is a declared version rather than a local installation.
+Every commit passes <code>ruff</code>, <code>ruff format</code>, <code>mypy</code> on all source files, and 199 tests. Coverage
+is 73 percent, concentrated on the modules where a silent error would corrupt a result: the
+normaliser, the metrics and the extractors.</p>
+<p>The whole study is reproducible from a clean checkout with the commands in the repository
+README. The response cache means a rerun of the analysis costs nothing; only a deliberate cache
+clear re-incurs API spend.</p>
+</section>
 <section class="chapter"><h1>5. Results</h1><p>All figures below were produced by the pipeline in this repository and can be regenerated
 with <code>bash scripts/run_experiments.sh</code> followed by
 <code>python -m src.evaluation.run_eval --mode relaxed</code>. Ten extractor configurations were run

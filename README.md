@@ -60,14 +60,14 @@ src/annotation/    gold standard annotation tool
 src/pipeline.py    resumable experiment runner
 configs/           ontology (source of truth for the type system), prompt templates
 docs/              data sources, findings, results, report
-tests/             198 tests
+tests/             199 tests
 ```
 
 ## Running it
 
 ```bash
 uv sync                                     # install
-pytest                                      # 198 tests
+pytest                                      # 199 tests
 docker compose up -d                        # Neo4j with APOC
 
 python -m src.ingestion.build_corpus --limit 400
