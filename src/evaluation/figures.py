@@ -467,7 +467,9 @@ def fig_corpus(threshold_rows: list[tuple[float, int, int]]) -> Path:
 def fig_baseline_failure(data: dict) -> Path:
     """Why the rule baseline fails, which is the mechanism behind the headline result.
 
-    The baseline identified a MOF in 156 of 794 synthesis passages. Because five of the eight
+    The baseline identified a MOF in 121 of 794 synthesis passages, matching the count in
+    `docs/baseline_findings.md` (reproduce with
+    `python -m src.pipeline --extractors rule_based --no-resume`). Because five of the eight
     ontology relations take MOF as their subject, that single failure suppresses most of what
     a rule-based system could otherwise extract. The breakdown shows the causes are
     coreference and generic naming, not lexicon gaps a larger dictionary would close.
@@ -483,7 +485,7 @@ def fig_baseline_failure(data: dict) -> Path:
         'Generic designation ("compound 1")',
         "Other",
     ]
-    counts = [156, 331, 251, 794 - 156 - 331 - 251]
+    counts = [121, 331, 251, 794 - 121 - 331 - 251]
     colours = [PALETTE[2], PALETTE[1], PALETTE[3], PALETTE[4]]
     hatches = ["...", "\\\\\\", "xxx", "///"]
 

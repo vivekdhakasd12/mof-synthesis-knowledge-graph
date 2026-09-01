@@ -5,14 +5,17 @@ Chapters are separate files so they can be revised independently and rendered to
 | File | Chapter | Status |
 |---|---|---|
 | `01_introduction.md` | Introduction, research questions, contributions | drafted |
-| `02_state_of_the_art.md` | Related work | TO WRITE, expand from the exposé's 13 verified references |
+| `02_state_of_the_art.md` | Related work | drafted |
 | `03_methodology.md` | Ontology, corpus, segmentation, gold standard, evaluation design | drafted |
-| `04_implementation.md` | Architecture, modules, reproducibility | TO WRITE |
+| `04_implementation.md` | Architecture, modules, reproducibility | drafted |
 | `05_results.md` | All measured results | drafted |
-| `06_discussion.md` | Interpretation | TO WRITE, see prompts below |
+| `06_discussion.md` | Interpretation | drafted, full draft for the author to rewrite in their own voice |
 | `07_limitations.md` | Limitations and threats to validity | drafted |
 | `08_conclusion.md` | Conclusion and future work | drafted |
-| `09_references.md` | References | TO WRITE, reuse the exposé's verified list |
+| `09_references.md` | References | drafted |
+
+All nine chapters now have draft text. What remains is the author's own pass over Chapter 6
+(see below), a final proofread, and the outstanding items tracked in `PROGRESS.md`.
 
 ## Rules this draft follows, and any revision must keep
 
@@ -29,23 +32,17 @@ Chapters are separate files so they can be revised independently and rendered to
 
 ## What still needs the author
 
-**Chapter 2, state of the art.** The exposé's 13 references are already verified against live
-sources and can be lifted. The chapter needs expanding into a narrative with the gap argument
-made explicitly, using the DigiMOF authors' own statement about implicit synthesis routes as
-the hinge.
+**Chapter 6, discussion, was written as a full draft rather than an outline**, at the
+author's request. It argues why the cheaper model likely outperformed the more expensive
+one, what the pre-registered prediction's holding does and does not establish, and what the
+15 percent MOF-identification rate implies for anyone maintaining a rule-based pipeline. It
+carries interpretive claims that a thesis's discussion chapter should ultimately be the
+student's own, especially given the project's AI-disclosure obligations: the author should
+read it critically, rewrite it in their own voice, and confirm or revise the two
+hypotheses it proposes (Sections 6.2 and 6.3) rather than submit it unread.
 
-**Chapter 4, implementation.** Describe the module structure, the unified extractor interface,
-the response cache and the resumable runner. Most of the material exists as module docstrings
-written for this purpose.
-
-**Chapter 6, discussion.** The three questions worth answering are: why the cheaper model
-outperformed the more expensive one, whether the pre-registered prediction holding validates
-the mechanism proposed for it, and what the 15 percent MOF-identification rate of the rule
-baseline implies for anyone maintaining a rule-based pipeline.
-
-**Figures.** None are drawn yet. The obvious candidates are a per-field grouped bar chart
-across extractors, a cost-against-F1 scatter plot which makes the cheap-model result visible
-at a glance, and a schematic of the pipeline.
+**Everything else** is drafted from measured artefacts and should need only a proofread, not
+a rewrite.
 
 ## Rendering
 
@@ -61,9 +58,12 @@ drafts.
 
 | File | Shows | Belongs in |
 |---|---|---|
-| `figures/fig1_cost_vs_f1` | Accuracy against cost, all ten configurations | 5.4, and worth repeating in the discussion |
+| `figures/fig1_cost_vs_f1` | Accuracy against cost, all ten configurations | 5.2 |
 | `figures/fig2_per_field_f1` | Per-field F1 for four representative extractors, with gold support on the axis | 5.3 |
 | `figures/fig3_prompting_strategies` | Prompting strategy by commercial model | 5.4 |
+| `figures/fig4_precision_recall` | Precision/recall with iso-F1 contours, all ten configurations | not yet embedded |
+| `figures/fig5_corpus_and_threshold` | Corpus funnel and synthesis-score threshold sensitivity | not yet embedded |
+| `figures/fig6_baseline_failure_modes` | Why the rule baseline fails to name the MOF, four causes | 6.3 |
 
 **Design constraints these follow, and any new figure must too.** Colour never carries
 identity alone: every series also has a marker shape or a hatch pattern, so the figures
