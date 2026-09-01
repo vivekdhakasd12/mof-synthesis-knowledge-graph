@@ -70,3 +70,8 @@ neo4j_logs/
 
 # OS
 Thumbs.db
+
+# Local development tooling, not part of the project
+.claude/
+CLAUDE.md
+MY_NOTES.md

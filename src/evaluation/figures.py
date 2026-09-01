@@ -301,12 +301,258 @@ def fig_strategies(data: dict) -> Path:
     return p
 
 
+def fig_precision_recall(data: dict) -> Path:
+    """Precision against recall, which separates two different ways of being wrong.
+
+    A single F1 hides whether a configuration is cautious or scattergun. Plotting the two
+    axes separately shows that the language models sit consistently above the baseline on
+    both, and that recall varies more than precision across prompting strategies, which is
+    the more actionable observation for anyone tuning one.
+    """
+    _style()
+    fig, ax = plt.subplots(figsize=(5.6, 4.6))
+    ax.grid(True, linewidth=0.6, alpha=0.7)
+    ax.set_axisbelow(True)
+
+    # Iso-F1 contours give the reader a way to compare points that a bare scatter cannot.
+    import numpy as np
+
+    grid = np.linspace(0.02, 0.75, 240)
+    xx, yy = np.meshgrid(grid, grid)
+    f1 = 2 * xx * yy / (xx + yy)
+    cs = ax.contour(xx, yy, f1, levels=[0.1, 0.2, 0.3, 0.4], colors=GRID, linewidths=0.7)
+    ax.clabel(cs, fmt="F1=%.1f", fontsize=6.5, colors=MUTED)
+
+    for name, v in data["extractors"].items():
+        if not v["calls"]:
+            continue
+        colour, marker, _ = FAMILY[_family(name)]
+        ax.scatter(
+            v["micro_recall"],
+            v["micro_precision"],
+            s=85,
+            color=colour,
+            marker=marker,
+            edgecolor="white",
+            linewidth=1.3,
+            zorder=3,
+        )
+
+    for name in ("llm:gpt-4o-mini:schema_guided", "rule_based_v1"):
+        v = data["extractors"][name]
+        ax.annotate(
+            _label(name),
+            (v["micro_recall"], v["micro_precision"]),
+            textcoords="offset points",
+            xytext=(9, -2),
+            fontsize=7.5,
+            color=INK,
+            linespacing=1.25,
+        )
+
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision")
+    ax.set_xlim(0.05, 0.52)
+    ax.set_ylim(0.05, 0.38)
+    ax.set_title("Precision against recall, with iso-F1 contours")
+    handles = [
+        plt.Line2D(
+            [],
+            [],
+            color=c,
+            marker=m,
+            linestyle="none",
+            markersize=7,
+            markeredgecolor="white",
+            label=f,
+        )
+        for f, (c, m, _) in FAMILY.items()
+    ]
+    ax.legend(handles=handles, frameon=False, loc="upper left", fontsize=8)
+    p = OUT / "fig4_precision_recall"
+    fig.savefig(p.with_suffix(".pdf"))
+    fig.savefig(p.with_suffix(".png"))
+    plt.close(fig)
+    return p
+
+
+def fig_corpus(threshold_rows: list[tuple[float, int, int]]) -> Path:
+    """Corpus funnel and the segmentation threshold, side by side.
+
+    The threshold is a declared methodological choice, so the report should show the curve
+    it was chosen from rather than assert that 0.45 was reasonable. Plotting passages and
+    papers on the same panel would need two y-scales, which is never acceptable, so they
+    are two panels sharing an x-axis.
+    """
+    _style()
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.2, 3.4))
+
+    stages = [
+        "Papers\ncollected",
+        "Papers with\nsynthesis text",
+        "Passages\nsegmented",
+        "Synthesis\npassages",
+        "Gold\nannotated",
+    ]
+    values = [399, 224, 22086, 794, 100]
+    bars = ax1.bar(
+        range(len(stages)),
+        values,
+        color=PALETTE[0],
+        edgecolor="white",
+        linewidth=1.2,
+        hatch="///",
+        zorder=3,
+    )
+    ax1.set_yscale("log")
+    ax1.set_xticks(range(len(stages)))
+    ax1.set_xticklabels(stages, fontsize=7)
+    ax1.set_ylabel("Count (log scale)")
+    ax1.set_title("Corpus funnel", fontsize=9.5)
+    ax1.grid(True, axis="y", linewidth=0.6, alpha=0.7)
+    ax1.set_axisbelow(True)
+    for b, v in zip(bars, values, strict=True):
+        ax1.annotate(
+            f"{v:,}",
+            (b.get_x() + b.get_width() / 2, v),
+            ha="center",
+            va="bottom",
+            fontsize=7,
+            color=INK,
+        )
+
+    cuts = [r[0] for r in threshold_rows]
+    passages = [r[1] for r in threshold_rows]
+    papers = [r[2] for r in threshold_rows]
+    ax2.plot(
+        cuts,
+        passages,
+        color=PALETTE[0],
+        marker="o",
+        markersize=6,
+        markeredgecolor="white",
+        linewidth=2,
+        label="passages",
+        zorder=3,
+    )
+    ax2.plot(
+        cuts,
+        papers,
+        color=PALETTE[1],
+        marker="s",
+        markersize=6,
+        markeredgecolor="white",
+        linewidth=2,
+        linestyle="--",
+        label="papers",
+        zorder=3,
+    )
+    ax2.axvline(0.45, color=MUTED, linewidth=1, linestyle=":", zorder=2)
+    ax2.annotate("chosen\nthreshold", (0.45, 1900), fontsize=7, color=MUTED, ha="center")
+    ax2.set_xlabel("Synthesis score threshold")
+    ax2.set_ylabel("Count")
+    ax2.set_title("Threshold sensitivity", fontsize=9.5)
+    ax2.grid(True, linewidth=0.6, alpha=0.7)
+    ax2.set_axisbelow(True)
+    ax2.legend(frameon=False, fontsize=8)
+
+    fig.tight_layout()
+    p = OUT / "fig5_corpus_and_threshold"
+    fig.savefig(p.with_suffix(".pdf"))
+    fig.savefig(p.with_suffix(".png"))
+    plt.close(fig)
+    return p
+
+
+def fig_baseline_failure(data: dict) -> Path:
+    """Why the rule baseline fails, which is the mechanism behind the headline result.
+
+    The baseline identified a MOF in 15 percent of synthesis passages. Because the ontology
+    roots five relations at the MOF node, that single failure suppresses most of what a
+    rule-based system could otherwise extract. The breakdown shows the causes are
+    coreference and generic naming, not lexicon gaps a bigger dictionary would close.
+    """
+    _style()
+    fig, ax = plt.subplots(figsize=(6.4, 3.2))
+    causes = [
+        "MOF named in\nthis passage",
+        "Named elsewhere\nin the paper",
+        'Generic designation\n("compound 1")',
+        "Other",
+    ]
+    counts = [156, 331, 251, 794 - 156 - 331 - 251]
+    colours = [PALETTE[2], PALETTE[1], PALETTE[3], PALETTE[4]]
+    hatches = ["...", "\\\\\\", "xxx", "///"]
+
+    left = 0.0
+    for c, n, colour, hatch in zip(causes, counts, colours, hatches, strict=True):
+        ax.barh(
+            0,
+            n,
+            left=left,
+            height=0.5,
+            color=colour,
+            edgecolor="white",
+            linewidth=1.6,
+            hatch=hatch,
+            zorder=3,
+        )
+        if n > 60:
+            ax.annotate(
+                f"{c}\n{n} ({n / 794:.0%})",
+                (left + n / 2, 0),
+                ha="center",
+                va="center",
+                fontsize=7.5,
+                color="white",
+                fontweight="bold",
+                linespacing=1.3,
+            )
+        left += n
+
+    ax.set_xlim(0, 794)
+    ax.set_ylim(-0.45, 0.45)
+    ax.set_yticks([])
+    ax.set_xlabel("Synthesis passages (n = 794)")
+    ax.set_title("Why the rule baseline cannot name the material")
+    for spine in ("left", "bottom"):
+        ax.spines[spine].set_visible(False)
+    fig.text(
+        0.01,
+        -0.06,
+        "Five of eight ontology relations take MOF as their subject, so a passage where "
+        "no MOF is identified\nyields none of them however clearly the reagents are written.",
+        fontsize=7,
+        color=MUTED,
+    )
+    p = OUT / "fig6_baseline_failure_modes"
+    fig.savefig(p.with_suffix(".pdf"))
+    fig.savefig(p.with_suffix(".png"))
+    plt.close(fig)
+    return p
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     data = load()
-    for fn in (fig_cost_vs_f1, fig_per_field, fig_strategies):
+    threshold_rows = [
+        (0.25, 2369, 325),
+        (0.35, 1369, 267),
+        (0.45, 794, 224),
+        (0.55, 485, 190),
+        (0.65, 268, 149),
+    ]
+    for fn in (
+        fig_cost_vs_f1,
+        fig_per_field,
+        fig_strategies,
+        fig_precision_recall,
+        fig_baseline_failure,
+    ):
         p = fn(data)
         print(f"  wrote {p.relative_to(REPO)}.pdf and .png")
+    p = fig_corpus(threshold_rows)
+    print(f"  wrote {p.relative_to(REPO)}.pdf and .png")
 
 
 if __name__ == "__main__":

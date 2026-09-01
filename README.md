@@ -1,82 +1,102 @@
-# Case Study 2 — LLM-Driven Knowledge Graph Construction from Materials Science Literature
+# Building and Validating a MOF Synthesis Knowledge Graph with Large Language Models
 
-**Author:** Devendra Singh Dhakad
-**Programme:** M.Sc. Data Science and AI, SRH University of Applied Sciences Heidelberg
+**Case Study 2**, M.Sc. Data Science and Artificial Intelligence
+SRH University of Applied Sciences Heidelberg
+
+**Author:** Devendra Singh Dhakad (Matriculation No. 100004684)
 **Supervisor:** Prof. Dr. Mehrdad Jalali
-**Duration:** 22 June 2026 – 15 September 2026 (12 weeks)
 
-## TL;DR
+---
 
-> **Re-aimed 10 June 2026** — see `docs/HANDOVER.md` for the authoritative framing: *Building and Validating a MOF Synthesis Knowledge Graph with LLMs*.
+## What this is
 
-Build an end-to-end pipeline that uses LLMs to extract MOF synthesis records (metal precursor, organic linker, solvent, method, conditions, properties, applications) from open-access literature, store them in a Neo4j knowledge graph, and validate extraction per field against a hand-annotated gold standard, DigiMOF/SynMOF agreement analysis, and ChemDataExtractor/MatSciBERT baselines. Ship a Streamlit dashboard for natural-language querying with full provenance.
+An end-to-end pipeline that extracts structured metal-organic framework (MOF) synthesis
+records from open-access scientific literature, loads them into a Neo4j knowledge graph with
+complete provenance, and **validates** the extractions field by field against a
+hand-annotated gold standard and a rule-based baseline.
+
+The emphasis is on validation rather than scale. Prior work demonstrates that language models
+can build large materials knowledge graphs; what is less established is how accurate those
+extractions are per field, how they compare with the rule-based systems the field already
+relies on, and what an open-weight model delivers relative to a commercial API at what cost.
+
+## Key results
+
+| Field | Rule baseline F1 | Best LLM F1 | Margin |
+|---|---|---|---|
+| USES_PRECURSOR | 0.13 | 0.55 | +0.42 |
+| USES_LINKER | 0.26 | 0.57 | +0.31 |
+| IN_SOLVENT | 0.23 | 0.48 | +0.25 |
+| AT_CONDITION | 0.00 | 0.17 | +0.17 |
+
+This ordering was **predicted and recorded before the models were run**, on the reasoning
+that solvents and conditions are matched by local surface patterns that rules already handle
+well, whereas identifying which material is being made is not. The prediction held.
+
+A second finding: **the cheaper commercial model outperformed the more expensive one** on
+three of four prompting strategies, at a 47-fold cost difference. The strongest configuration
+cost 0.028 USD for 100 passages; the most expensive cost 1.289 USD and scored lower.
+
+Full results, including what the evaluation cannot show, are in `docs/results.md` and
+`docs/report/`.
+
+## Scale
+
+- **399** open-access papers, 20.6 million characters, every one carrying a DOI
+- **22,086** segmented passages, **794** classified as synthesis text
+- **100** hand-annotated gold passages containing **138** triples
+- **1,000** extraction runs across 10 configurations, 3.06 USD total
+- Knowledge graph of **485** nodes and **2,429** relationships across 182 papers, with
+  **zero** provenance violations (every entity traces to its source paper by query)
 
 ## Repository layout
 
 ```
-case-study-2/
-├── src/
-│   ├── ingestion/     # arXiv / ChemRxiv / PMC collectors, PDF parsing
-│   ├── extraction/    # LLM-based extractors (zero/few-shot, schema-guided, CoT)
-│   ├── baselines/     # ChemDataExtractor, MatSciBERT pipelines
-│   ├── kg/            # Neo4j ingestion, entity resolution, Cypher schema
-│   ├── evaluation/    # gold-standard, metrics, error analysis
-│   └── dashboard/     # Streamlit app, NL→Cypher
-├── data/
-│   ├── raw/           # PDFs and metadata (gitignored)
-│   ├── processed/     # parsed plaintext (gitignored)
-│   └── annotations/   # gold-standard (committed)
-├── docs/              # exposé, literature review, evaluation report, final report
-├── configs/           # ontology JSON-Schema, prompt templates, model configs
-├── notebooks/         # exploratory analyses
-├── tests/             # pytest suite
-├── pyproject.toml
-├── Dockerfile
-├── docker-compose.yml # neo4j + app
-└── PROGRESS.md        # rolling work log
+src/ingestion/     corpus collection from Europe PMC, JATS parsing, passage segmentation
+src/extraction/    unified extractor interface, rule-based baseline, LLM extractors, cache
+src/evaluation/    per-field metrics, agreement analysis, figures
+src/kg/            Neo4j schema, provenance-writing loader, named research queries
+src/annotation/    gold standard annotation tool
+src/pipeline.py    resumable experiment runner
+configs/           ontology (source of truth for the type system), prompt templates
+docs/              data sources, findings, results, report
+tests/             198 tests
 ```
 
-## Quick start
+## Running it
 
 ```bash
-# 1. Install
-uv sync   # or: pip install -e ".[dev]"
+uv sync                                     # install
+pytest                                      # 198 tests
+docker compose up -d                        # Neo4j with APOC
 
-# 2. Bring up Neo4j
-docker compose up -d
-
-# 3. Run a small smoke test
-python -m src.ingestion.arxiv_fetcher --query "perovskite solar cell" --max 5
-python -m src.extraction.llm_extractor --input data/processed/sample.jsonl --strategy schema_guided
-
-# 4. Launch dashboard
-streamlit run src/dashboard/app.py
+python -m src.ingestion.build_corpus --limit 400
+python -m src.ingestion.segment --synthesis-only
+bash scripts/run_experiments.sh --smoke     # verify API keys cheaply
+bash scripts/run_experiments.sh             # full grid
+python -m src.evaluation.run_eval --mode relaxed
+python -m src.evaluation.figures
+python docs/report/build_report.py
 ```
 
-## Phases
+API keys go in `.env` (see `.env.example`); `scripts/set_keys.sh` writes them without
+echoing. The response cache means a rerun costs nothing, and the experiment runner resumes
+per (passage, extractor) so an interrupted run is never billed twice.
 
-See [`docs/expose.docx`](docs/expose.docx) for the full plan. High-level:
+## Design decisions worth reading the code for
 
-| Weeks | Phase | Deliverable |
-|-------|-------|-------------|
-| 1–2   | Foundation: literature, ontology, scaffolding | `docs/literature_review.md`, `configs/ontology.json` |
-| 3     | Corpus collection & PDF parsing | `data/processed/corpus.jsonl` |
-| 4–5   | LLM + baseline extractors | `src/extraction`, `src/baselines` |
-| 6     | Gold-standard annotation | `data/annotations/gold.jsonl` |
-| 7     | KG construction & entity resolution | populated Neo4j graph |
-| 8     | Evaluation at scale | `docs/evaluation_report.md` |
-| 9     | Error analysis & cost study | extended report |
-| 10    | Streamlit dashboard | `src/dashboard/app.py` |
-| 11    | Reproducibility, supervisor feedback | clean Docker run |
-| 12    | Final report & defence | `docs/final_report.pdf`, slides |
+- **Provenance is structural, not advisory.** Every entity in the graph carries a
+  `MENTIONED_IN` edge to its source paper with the section and evidence sentence. The claim
+  is checkable: `src/kg/queries.py` includes a query that must return zero rows.
+- **One shared normaliser** (`src/normalize.py`) is used by both the evaluation and the graph
+  loader, so the reported accuracy and the delivered artefact cannot disagree about whether
+  two chemical names denote the same reagent.
+- **The gold standard was annotated by hand**, deliberately never pre-filled by a model,
+  because it is the instrument the models are measured against.
+- **Extractors never raise.** Failures are recorded in the result so a single awkward passage
+  cannot abort a multi-hour run, and an empty model response is recorded as an error rather
+  than silently counted as "found nothing".
 
-## Working principles
+## Licence
 
-- Reproducibility first: every result reachable from a fresh `docker compose up`.
-- Cache LLM calls; never re-pay for the same inference twice.
-- Evaluate on a frozen gold standard; never tune on it.
-- Provenance is mandatory: every triple in the KG points to a paper, section, and sentence.
-
-## License
-
-Code: MIT. Data: respective sources' open-access licences.
+Code: MIT. Corpus: open-access papers under their respective Creative Commons licences.

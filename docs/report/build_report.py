@@ -119,7 +119,17 @@ TEMPLATE = """<!DOCTYPE html>
 :root {{ --srh-orange:#E64415; --ink:#1a1a1a; --muted:#555; --rule:#e3e3e3; --link:#0b5bd3; }}
 @font-face {{ font-family:'Lato'; src:url('assets/fonts/Lato-Regular.ttf'); font-weight:400; }}
 * {{ margin:0; padding:0; box-sizing:border-box; }}
-@page {{ size:A4; margin:2.4cm 2.2cm; }}
+@page {{
+  size:A4; margin:2.4cm 2.2cm;
+  /* Chrome's headless print DOES honour page margin boxes, so page numbers are real
+     rather than added by hand later. counter(pages) gives the total. */
+  @bottom-center {{
+    content: counter(page) " of " counter(pages);
+    font-family:'Lato',Helvetica,Arial,sans-serif; font-size:8.5pt; color:#777;
+  }}
+}}
+/* The title page carries no number, which is the usual convention. */
+@page :first {{ @bottom-center {{ content: ""; }} }}
 html {{ background:#f0f0f0; }}
 body {{ font-family:'Lato',Helvetica,Arial,sans-serif; font-size:10.5pt; line-height:1.55; color:var(--ink); }}
 .sheet {{ background:#fff; width:21cm; min-height:29.7cm; margin:1.2rem auto; padding:2.4cm 2.2cm;
