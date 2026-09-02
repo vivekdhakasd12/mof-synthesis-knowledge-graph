@@ -54,6 +54,12 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+# Third-party reference databases (DigiMOF SI, SynMOF). Their redistribution terms are the
+# publishers', not ours, so a reader fetches them rather than receiving a copy from us.
+# docs/data_sources.md records where they come from, and
+# src/evaluation/build_reference_join.py rebuilds the merged file from them.
+data/external/*
+!data/external/.gitkeep
 llm_cache/
 *.log
 

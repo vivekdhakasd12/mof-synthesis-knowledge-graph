@@ -134,3 +134,43 @@ confident than they warrant. Chapter 7 sets out why 0.364 micro-F1, or roughly 0
 field whose scores measure annotation granularity rather than extraction quality is excluded,
 is a lower bound rather than a ceiling, and what it would actually take to close the remaining
 gap to the target I set in the exposé.
+
+## 6.5 What the reference databases could and could not tell me
+
+I set out in Chapter 2 to validate extractions against DigiMOF and SynMOF, and that is the
+research question this project does not answer. It is worth being precise about why, because
+the reason is not that the analysis failed but that it was posed against the wrong key.
+
+The two databases share 509 MOFs by CSD refcode, and on those they agree about the metal
+98.9 percent of the time. I find that number genuinely useful, and not for the reason I
+expected. It says two independently built text-mining efforts, one rule-based over full text
+and one manually curated, converge almost completely on the metal when they describe the
+same material. That is a reassuring result about the reference databases themselves, and it
+sets a rough ceiling on what agreement between any two extraction systems ought to look like
+on a field this well defined.
+
+The obstacle is the key. DigiMOF and SynMOF are indexed by CSD refcode, and my gold standard
+is indexed by whatever name the paper used. Getting from "MOF-303" to a refcode needs a
+mapping resource I do not have, so I cannot compute the overlap, and I want to say plainly
+that undetermined is not the same as zero. An earlier draft of this chapter asserted that the
+overlap was zero and that the corpus contained no classic MOFs. Both claims were wrong. The
+gold standard contains ZIF-8, MIL-101(Cr), UiO-66-NH₂, NU-1000 and Cu₃(BTC)₂, and that last
+one is HKUST-1, whose composition sits in the intersection as refcode REYMOZ. I could only
+establish a composition-level match rather than a confirmed identity, since the same metal
+and linker can build different frameworks, but it is enough to rule out the disjointness I
+had claimed.
+
+What I take from this is a lesson about evaluation design rather than about extraction. I
+chose the corpus for one property, open access with structured full text, and chose the
+reference databases for another, coverage of MOF synthesis. Nothing forced those two choices
+to share an identifier, and I did not check that they did until after the corpus was built
+and annotated. The 31 percent linker coverage inside the intersection points the same way:
+even had the join worked, the field I most wanted to validate is the field DigiMOF is
+thinnest on. An agreement study needs the join key and the field coverage settled before the
+corpus is collected, not after.
+
+So RQ3 stays open, and Chapter 8 records what closing it would take. What I can offer in its
+place is narrower but real: the reference databases are highly self-consistent on the
+material they share, my corpus is not disjoint from them, and the specific reason a
+per-record comparison is out of reach is an identifier mismatch rather than anything about
+how well the models read a paper.

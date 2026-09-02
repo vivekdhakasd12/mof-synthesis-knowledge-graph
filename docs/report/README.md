@@ -21,7 +21,11 @@ All nine chapters now have draft text. What remains is the author's own pass ove
 
 1. **Every number traces to an artefact.** No figure appears here that was not produced by
    the pipeline. The sources are `docs/results.md`, `docs/kg_results.md`,
-   `docs/baseline_findings.md` and `docs/data_sources.md`, all regenerable.
+   `docs/baseline_findings.md` and `docs/data_sources.md`, all regenerable. This rule is
+   load-bearing rather than decorative: a draft of Section 5.7 once reported an overlap
+   figure that was a hardcoded literal in the analysis script rather than a computed
+   result, and the figure was wrong. Anything a script prints must be derived by that
+   script.
 2. **No em dashes**, per the project writing rule.
 3. **Support counts accompany every score.** Four of the eight relations have too little gold
    support to conclude from, and the text must keep saying so.
@@ -61,8 +65,8 @@ drafts.
 | `figures/fig1_cost_vs_f1` | Accuracy against cost, all ten configurations | 5.2 |
 | `figures/fig2_per_field_f1` | Per-field F1 for four representative extractors, with gold support on the axis | 5.3 |
 | `figures/fig3_prompting_strategies` | Prompting strategy by commercial model | 5.4 |
-| `figures/fig4_precision_recall` | Precision/recall with iso-F1 contours, all ten configurations | not yet embedded |
-| `figures/fig5_corpus_and_threshold` | Corpus funnel and synthesis-score threshold sensitivity | not yet embedded |
+| `figures/fig4_precision_recall` | Precision/recall with iso-F1 contours, all ten configurations | 5.2 |
+| `figures/fig5_corpus_and_threshold` | Corpus funnel and synthesis-score threshold sensitivity | 3.3 |
 | `figures/fig6_baseline_failure_modes` | Why the rule baseline fails to name the MOF, four causes | 6.3 |
 
 **Design constraints these follow, and any new figure must too.** Colour never carries

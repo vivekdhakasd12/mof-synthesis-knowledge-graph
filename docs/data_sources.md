@@ -62,12 +62,29 @@ it gives this project a concrete, pre-registered hypothesis from the baseline's 
 LLM extraction should beat rule-based extraction by the largest margin on implicit synthesis
 routes, and by much less on explicitly named reagents.
 
-## SynMOF (outstanding)
+## SynMOF (obtained 2026-09-02)
 
 Luo et al. 2022, Angew. Chem. Int. Ed. 61, e202200242. The aimat-lab repository
 `MOF_Synthesis_Prediction` was inspected and holds mostly machine-learning feature dumps
-(`RAC_features`, `Fingerprint_features`), not a clean DOI-indexed record table. Still being
-scouted.
+(`RAC_features`, `Fingerprint_features`), not a clean DOI-indexed record table. The
+distributed record tables were subsequently obtained: `SynMOF_A.csv` (983 automatically
+extracted records), `SynMOF_M.csv` (840 manually curated), and `SynMOF_ME.csv` (840).
+Records are keyed by a `filename` column of the form `REFCODE_clean`, so the key is a CSD
+refcode, not a DOI.
+
+**Status of the join.** `src/evaluation/build_reference_join.py` joins the DigiMOF SI
+Master sheet to `SynMOF_M.csv` on refcode, deduplicating both sides first, and yields **509
+distinct MOFs**. `src/evaluation/agreement_analysis.py` reports coverage and cross-database
+agreement over that set. Both are reproducible from the source files.
+
+**What is still blocked.** Neither database can be joined to this project's corpus or gold
+standard, which are keyed by DOI and by the MOF name a paper uses. That needs a
+name-or-DOI-to-refcode mapping, normally a licensed CSD resource. RQ3 is therefore not
+answered; see Section 7.7 of the report.
+
+**Redistribution.** These files are not committed. `data/external/` is gitignored because
+the terms are the publishers', not ours. A reader fetches them from the DOIs above and runs
+the build script.
 
 ## Model set for the experimental grid (decided 2026-08-31)
 

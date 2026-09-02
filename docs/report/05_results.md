@@ -181,3 +181,65 @@ which would misrepresent a rate-limited model as a weak one. Reporting a strateg
 obtained is honest; reporting it as scoring near zero is not.
 
 RQ4 therefore rests on a single prompting strategy for the open-weight side.
+
+## 5.7 DigiMOF and SynMOF agreement (RQ3)
+
+RQ3 asked where and why LLM extractions disagree with the DigiMOF and SynMOF reference
+databases. This section reports what could be established and, more importantly, what could
+not. Every number below is produced by `python -m src.evaluation.build_reference_join`
+followed by `python -m src.evaluation.agreement_analysis`, which rebuild the join from the
+two published source files rather than from a stored intermediate.
+
+**The two databases were joined on CSD refcode.** DigiMOF's Supporting Information Master
+sheet holds 24,785 rows covering 24,732 distinct refcodes, and the manually curated SynMOF
+subset holds 840. Both sides are deduplicated on refcode before joining, because DigiMOF
+repeats some refcodes and an undeduplicated join returns 513 rows for the same materials.
+The intersection is **509 distinct MOFs**.
+
+Field coverage within that intersection:
+
+| Field | Source | Coverage |
+|---|---|---|
+| Topology | DigiMOF | 509/509 (100 percent) |
+| Temperature | SynMOF | 509/509 (100 percent) |
+| Time | SynMOF | 509/509 (100 percent) |
+| Primary metal | SynMOF | 509/509 (100 percent) |
+| Metal | DigiMOF | 494/509 (97 percent) |
+| Yield | SynMOF | 374/509 (74 percent) |
+| Linker | DigiMOF | 159/509 (31 percent) |
+
+The linker coverage of 31 percent is the notable figure: the field this study cares most
+about is the one the reference databases are least complete on.
+
+The intersection is dominated by water (351 records) and DMF (217), with a median synthesis
+temperature of 120 °C and a median reaction time of 72 hours. The leading metals are Cu
+(109), Zn (100), Cd (68) and Co (60).
+
+**Agreement between the two databases.** Where both name a metal, they agree on
+**468 of 473 comparable records, 98.9 percent**. Agreement is defined as SynMOF's single
+primary metal appearing among the metals DigiMOF lists, since DigiMOF concatenates the
+metals of a bimetallic framework into one string. A further 36 records are not comparable
+because DigiMOF's metal field is empty or holds the literal value 0; these are excluded
+rather than counted as disagreements. The five genuine conflicts are substantive rather
+than cosmetic, for example refcode HUNBIB, recorded as Fe by DigiMOF and As by SynMOF.
+
+**Why RQ3 cannot be answered as posed.** Both reference databases are keyed by CSD refcode.
+The gold standard is keyed by the MOF name as the paper writes it. Joining the two requires
+a name-to-refcode resource this project does not have, which is the same obstacle recorded
+in Section 7.7. The refcode-level overlap between the gold standard and the intersection is
+therefore **undetermined**, and no per-record agreement rate against DigiMOF or SynMOF can
+be computed.
+
+What can be computed without that resource is a weaker screen. Of the 33 distinct MOF names
+in the gold standard, 9 have a composition, a metal and a linker, settled enough in the
+literature to write down; the remaining 24 do not, because a label such as "Ce-MOF" or a
+bare "COF" names no specific composition. Of those 9, **one has its composition present in
+the intersection**: Cu₃(BTC)₂, which is HKUST-1, matches refcode REYMOZ (Cu,
+1,3,5-benzenetricarboxylic acid, tbo topology).
+
+That single match is reported with its limits attached. A shared composition is a necessary
+but not a sufficient condition for identity, because the same metal and linker can assemble
+into different frameworks carrying different refcodes. It is enough to show that the gold
+standard and the reference intersection are not disjoint, and not enough to confirm any
+individual MOF as the same material. RQ3 is therefore recorded as unanswered, and the
+reasons are stated in Section 7.7 rather than presented as a result.

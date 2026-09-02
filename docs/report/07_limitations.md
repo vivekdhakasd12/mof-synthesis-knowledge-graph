@@ -92,10 +92,21 @@ not indexed there, so the corpus is not a random sample of MOF literature. The p
 distribution does overlap DigiMOF's sources, which supports the feasibility of the agreement
 analysis, but coverage bias remains.
 
-The DigiMOF supporting information is keyed by CSD refcode while this corpus is keyed by DOI,
-and a per-paper join requires a refcode-to-DOI mapping that is normally obtained from a
-licensed resource. RQ3 is consequently not answered in this report and is carried as future
-work.
+The DigiMOF supporting information is keyed by CSD refcode while this corpus is keyed by DOI
+and the gold standard by the MOF name a paper uses. A per-record join requires a
+name-or-DOI-to-refcode mapping that is normally obtained from a licensed resource. Section
+5.7 reports what could be established without one: the two reference databases were joined
+to each other on refcode, giving 509 shared MOFs on which they agree about the metal 98.9
+percent of the time, and a composition-level screen shows the gold standard is not disjoint
+from that intersection. What could not be established is any per-record agreement rate
+between this study's extractions and either database.
+
+**Consequence.** RQ3 is not answered in this report. The overlap between the gold standard
+and the reference intersection is undetermined rather than zero, a distinction this report
+draws deliberately, since an earlier draft asserted zero and was wrong. A further constraint
+would bind even if the mapping were obtained: DigiMOF records a linker for only 31 percent of
+the shared MOFs, so the field this study most wants to validate is the one the reference is
+thinnest on.
 
 ## 7.8 Single run, no variance estimate
 

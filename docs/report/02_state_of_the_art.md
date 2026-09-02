@@ -16,10 +16,15 @@ auditability. A parser either matches or it does not, and the reason is inspecta
 That toolkit produced the two reference databases this work validates against.
 **DigiMOF** (Glasby et al., 2023) adapted ChemDataExtractor with MOF-specific parsers and
 applied it to 43,281 articles, yielding 15,501 MOFs and 52,680 synthesis-property records
-covering synthesis method, solvent, organic linker, metal precursor and topology.
+covering synthesis method, solvent, organic linker, metal precursor and topology. The
+published Supporting Information tabulates a larger structural set of 24,732 distinct CSD
+refcodes, which is the file Section 5.7 joins against; the two counts describe different
+artefacts of the same work rather than disagreeing.
 **SynMOF** (Luo et al., 2022) mined synthesis conditions for 983 MOFs, including metal
 source, linker, temperature, time, solvent and additives, and used them to train synthesis
-prediction models.
+prediction models. It is distributed as an automatically extracted set of 983 records and a
+manually curated subset of 840; Section 5.7 uses the curated subset, and states which
+wherever a count appears.
 
 The same approach has been applied beyond MOFs. Kim et al. (2017) mined oxide synthesis
 parameters, and Kononova et al. (2019) extracted 19,488 inorganic synthesis recipes into a

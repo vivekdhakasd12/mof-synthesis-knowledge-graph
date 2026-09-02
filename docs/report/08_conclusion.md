@@ -50,8 +50,11 @@ close.
 
 ## 8.4 Future work
 
-1. **Complete RQ3.** Obtain a DOI-keyed export of the DigiMOF text-mined table, or accept a
-   MOF-name join with its ambiguity stated, and run the agreement analysis.
+1. **Complete RQ3.** The blocker is an identifier mismatch, not a missing analysis: the
+   reference databases are keyed by CSD refcode and this corpus by DOI and MOF name.
+   Obtain a name-or-DOI-to-refcode mapping, then run the per-record comparison that
+   Section 5.7 sets up but cannot execute. Note that DigiMOF carries a linker for only 31
+   percent of the shared MOFs, so linker agreement will rest on a small subset even then.
 2. **Complete the open-weight strategy sweep**, which requires either a paid serving tier or
    several days of free-tier quota.
 3. **Repair the condition evaluation**, either by changing the annotation convention to one

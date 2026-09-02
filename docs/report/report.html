@@ -172,10 +172,15 @@ auditability. A parser either matches or it does not, and the reason is inspecta
 <p>That toolkit produced the two reference databases this work validates against.
 <strong>DigiMOF</strong> (Glasby et al., 2023) adapted ChemDataExtractor with MOF-specific parsers and
 applied it to 43,281 articles, yielding 15,501 MOFs and 52,680 synthesis-property records
-covering synthesis method, solvent, organic linker, metal precursor and topology.
+covering synthesis method, solvent, organic linker, metal precursor and topology. The
+published Supporting Information tabulates a larger structural set of 24,732 distinct CSD
+refcodes, which is the file Section 5.7 joins against; the two counts describe different
+artefacts of the same work rather than disagreeing.
 <strong>SynMOF</strong> (Luo et al., 2022) mined synthesis conditions for 983 MOFs, including metal
 source, linker, temperature, time, solvent and additives, and used them to train synthesis
-prediction models.</p>
+prediction models. It is distributed as an automatically extracted set of 983 records and a
+manually curated subset of 840; Section 5.7 uses the curated subset, and states which
+wherever a count appears.</p>
 <p>The same approach has been applied beyond MOFs. Kim et al. (2017) mined oxide synthesis
 parameters, and Kononova et al. (2019) extracted 19,488 inorganic synthesis recipes into a
 codified action-graph schema. The latter is a useful precedent for the present work's
@@ -1072,6 +1077,94 @@ passages is still scored against all 138 gold triples and reports an artificiall
 which would misrepresent a rate-limited model as a weak one. Reporting a strategy as not
 obtained is honest; reporting it as scoring near zero is not.</p>
 <p>RQ4 therefore rests on a single prompting strategy for the open-weight side.</p>
+<h2>5.7 DigiMOF and SynMOF agreement (RQ3)</h2>
+<p>RQ3 asked where and why LLM extractions disagree with the DigiMOF and SynMOF reference
+databases. This section reports what could be established and, more importantly, what could
+not. Every number below is produced by <code>python -m src.evaluation.build_reference_join</code>
+followed by <code>python -m src.evaluation.agreement_analysis</code>, which rebuild the join from the
+two published source files rather than from a stored intermediate.</p>
+<p><strong>The two databases were joined on CSD refcode.</strong> DigiMOF's Supporting Information Master
+sheet holds 24,785 rows covering 24,732 distinct refcodes, and the manually curated SynMOF
+subset holds 840. Both sides are deduplicated on refcode before joining, because DigiMOF
+repeats some refcodes and an undeduplicated join returns 513 rows for the same materials.
+The intersection is <strong>509 distinct MOFs</strong>.</p>
+<p>Field coverage within that intersection:</p>
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Source</th>
+  <th>Coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Topology</td>
+  <td>DigiMOF</td>
+  <td>509/509 (100 percent)</td>
+</tr>
+<tr>
+  <td>Temperature</td>
+  <td>SynMOF</td>
+  <td>509/509 (100 percent)</td>
+</tr>
+<tr>
+  <td>Time</td>
+  <td>SynMOF</td>
+  <td>509/509 (100 percent)</td>
+</tr>
+<tr>
+  <td>Primary metal</td>
+  <td>SynMOF</td>
+  <td>509/509 (100 percent)</td>
+</tr>
+<tr>
+  <td>Metal</td>
+  <td>DigiMOF</td>
+  <td>494/509 (97 percent)</td>
+</tr>
+<tr>
+  <td>Yield</td>
+  <td>SynMOF</td>
+  <td>374/509 (74 percent)</td>
+</tr>
+<tr>
+  <td>Linker</td>
+  <td>DigiMOF</td>
+  <td>159/509 (31 percent)</td>
+</tr>
+</tbody>
+</table>
+<p>The linker coverage of 31 percent is the notable figure: the field this study cares most
+about is the one the reference databases are least complete on.</p>
+<p>The intersection is dominated by water (351 records) and DMF (217), with a median synthesis
+temperature of 120 °C and a median reaction time of 72 hours. The leading metals are Cu
+(109), Zn (100), Cd (68) and Co (60).</p>
+<p><strong>Agreement between the two databases.</strong> Where both name a metal, they agree on
+<strong>468 of 473 comparable records, 98.9 percent</strong>. Agreement is defined as SynMOF's single
+primary metal appearing among the metals DigiMOF lists, since DigiMOF concatenates the
+metals of a bimetallic framework into one string. A further 36 records are not comparable
+because DigiMOF's metal field is empty or holds the literal value 0; these are excluded
+rather than counted as disagreements. The five genuine conflicts are substantive rather
+than cosmetic, for example refcode HUNBIB, recorded as Fe by DigiMOF and As by SynMOF.</p>
+<p><strong>Why RQ3 cannot be answered as posed.</strong> Both reference databases are keyed by CSD refcode.
+The gold standard is keyed by the MOF name as the paper writes it. Joining the two requires
+a name-to-refcode resource this project does not have, which is the same obstacle recorded
+in Section 7.7. The refcode-level overlap between the gold standard and the intersection is
+therefore <strong>undetermined</strong>, and no per-record agreement rate against DigiMOF or SynMOF can
+be computed.</p>
+<p>What can be computed without that resource is a weaker screen. Of the 33 distinct MOF names
+in the gold standard, 9 have a composition, a metal and a linker, settled enough in the
+literature to write down; the remaining 24 do not, because a label such as &quot;Ce-MOF&quot; or a
+bare &quot;COF&quot; names no specific composition. Of those 9, <strong>one has its composition present in
+the intersection</strong>: Cu₃(BTC)₂, which is HKUST-1, matches refcode REYMOZ (Cu,
+1,3,5-benzenetricarboxylic acid, tbo topology).</p>
+<p>That single match is reported with its limits attached. A shared composition is a necessary
+but not a sufficient condition for identity, because the same metal and linker can assemble
+into different frameworks carrying different refcodes. It is enough to show that the gold
+standard and the reference intersection are not disjoint, and not enough to confirm any
+individual MOF as the same material. RQ3 is therefore recorded as unanswered, and the
+reasons are stated in Section 7.7 rather than presented as a result.</p>
 </section>
 <section class="chapter"><h1>6. Discussion</h1><p>I want to use this chapter to actually think through the results in Chapter 5, rather than
 restate them with different wording. Three questions seem worth answering properly: what the
@@ -1189,6 +1282,40 @@ confident than they warrant. Chapter 7 sets out why 0.364 micro-F1, or roughly 0
 field whose scores measure annotation granularity rather than extraction quality is excluded,
 is a lower bound rather than a ceiling, and what it would actually take to close the remaining
 gap to the target I set in the exposé.</p>
+<h2>6.5 What the reference databases could and could not tell me</h2>
+<p>I set out in Chapter 2 to validate extractions against DigiMOF and SynMOF, and that is the
+research question this project does not answer. It is worth being precise about why, because
+the reason is not that the analysis failed but that it was posed against the wrong key.</p>
+<p>The two databases share 509 MOFs by CSD refcode, and on those they agree about the metal
+98.9 percent of the time. I find that number genuinely useful, and not for the reason I
+expected. It says two independently built text-mining efforts, one rule-based over full text
+and one manually curated, converge almost completely on the metal when they describe the
+same material. That is a reassuring result about the reference databases themselves, and it
+sets a rough ceiling on what agreement between any two extraction systems ought to look like
+on a field this well defined.</p>
+<p>The obstacle is the key. DigiMOF and SynMOF are indexed by CSD refcode, and my gold standard
+is indexed by whatever name the paper used. Getting from &quot;MOF-303&quot; to a refcode needs a
+mapping resource I do not have, so I cannot compute the overlap, and I want to say plainly
+that undetermined is not the same as zero. An earlier draft of this chapter asserted that the
+overlap was zero and that the corpus contained no classic MOFs. Both claims were wrong. The
+gold standard contains ZIF-8, MIL-101(Cr), UiO-66-NH₂, NU-1000 and Cu₃(BTC)₂, and that last
+one is HKUST-1, whose composition sits in the intersection as refcode REYMOZ. I could only
+establish a composition-level match rather than a confirmed identity, since the same metal
+and linker can build different frameworks, but it is enough to rule out the disjointness I
+had claimed.</p>
+<p>What I take from this is a lesson about evaluation design rather than about extraction. I
+chose the corpus for one property, open access with structured full text, and chose the
+reference databases for another, coverage of MOF synthesis. Nothing forced those two choices
+to share an identifier, and I did not check that they did until after the corpus was built
+and annotated. The 31 percent linker coverage inside the intersection points the same way:
+even had the join worked, the field I most wanted to validate is the field DigiMOF is
+thinnest on. An agreement study needs the join key and the field coverage settled before the
+corpus is collected, not after.</p>
+<p>So RQ3 stays open, and Chapter 8 records what closing it would take. What I can offer in its
+place is narrower but real: the reference databases are highly self-consistent on the
+material they share, my corpus is not disjoint from them, and the specific reason a
+per-record comparison is out of reach is an identifier mismatch rather than anything about
+how well the models read a paper.</p>
 </section>
 <section class="chapter"><h1>7. Limitations and Threats to Validity</h1><p>This chapter states what the study cannot show. Several of these limitations were discovered
 during the work and are recorded with the evidence that produced them, so that a reader can
@@ -1281,10 +1408,20 @@ the commercial models' lineage, but it is not the model the exposé named.</p>
 not indexed there, so the corpus is not a random sample of MOF literature. The publisher
 distribution does overlap DigiMOF's sources, which supports the feasibility of the agreement
 analysis, but coverage bias remains.</p>
-<p>The DigiMOF supporting information is keyed by CSD refcode while this corpus is keyed by DOI,
-and a per-paper join requires a refcode-to-DOI mapping that is normally obtained from a
-licensed resource. RQ3 is consequently not answered in this report and is carried as future
-work.</p>
+<p>The DigiMOF supporting information is keyed by CSD refcode while this corpus is keyed by DOI
+and the gold standard by the MOF name a paper uses. A per-record join requires a
+name-or-DOI-to-refcode mapping that is normally obtained from a licensed resource. Section
+5.7 reports what could be established without one: the two reference databases were joined
+to each other on refcode, giving 509 shared MOFs on which they agree about the metal 98.9
+percent of the time, and a composition-level screen shows the gold standard is not disjoint
+from that intersection. What could not be established is any per-record agreement rate
+between this study's extractions and either database.</p>
+<p><strong>Consequence.</strong> RQ3 is not answered in this report. The overlap between the gold standard
+and the reference intersection is undetermined rather than zero, a distinction this report
+draws deliberately, since an earlier draft asserted zero and was wrong. A further constraint
+would bind even if the mapping were obtained: DigiMOF records a linker for only 31 percent of
+the shared MOFs, so the field this study most wants to validate is the one the reference is
+thinnest on.</p>
 <h2>7.8 Single run, no variance estimate</h2>
 <p>Every configuration was run once, at temperature 0. No variance across repeated runs is
 reported, so apparent differences between configurations include an unmeasured sampling
@@ -1330,8 +1467,11 @@ designation such as &quot;compound 1&quot;. Those are not lexicon gaps that a la
 close.</p>
 <h2>8.4 Future work</h2>
 <ol>
-<li><strong>Complete RQ3.</strong> Obtain a DOI-keyed export of the DigiMOF text-mined table, or accept a
-MOF-name join with its ambiguity stated, and run the agreement analysis.</li>
+<li><strong>Complete RQ3.</strong> The blocker is an identifier mismatch, not a missing analysis: the
+reference databases are keyed by CSD refcode and this corpus by DOI and MOF name.
+Obtain a name-or-DOI-to-refcode mapping, then run the per-record comparison that
+Section 5.7 sets up but cannot execute. Note that DigiMOF carries a linker for only 31
+percent of the shared MOFs, so linker agreement will rest on a small subset even then.</li>
 <li><strong>Complete the open-weight strategy sweep</strong>, which requires either a paid serving tier or
 several days of free-tier quota.</li>
 <li><strong>Repair the condition evaluation</strong>, either by changing the annotation convention to one
