@@ -72,6 +72,9 @@ llm_cache/
 # arriving at this repository actually wants to open.
 !docs/report/*.pdf
 !docs/report/*.html
+# Tectonic's build log, which is regenerated on every compile.
+docs/report/*.log
+
 neo4j_data/
 neo4j_logs/
 

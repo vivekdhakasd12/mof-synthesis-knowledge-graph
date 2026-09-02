@@ -82,7 +82,7 @@ The threshold is a declared choice, not an accident. Its sensitivity is:
 
 ![Corpus funnel and synthesis-score threshold sensitivity](figures/fig5_corpus_and_threshold.png)
 
-**Figure 5.** Left, the corpus funnel from collection to the gold standard, on a log scale
+**Figure 1.** Left, the corpus funnel from collection to the gold standard, on a log scale
 because each stage is roughly an order of magnitude smaller than the last. Right, the same
 threshold sensitivity as the table, shown as a curve so the chosen cutoff of 0.45 can be seen
 sitting on the shoulder of the curve rather than at an arbitrary point on a steep slope.
