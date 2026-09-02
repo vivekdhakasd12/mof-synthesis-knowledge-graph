@@ -50,40 +50,45 @@ a rewrite.
 
 ## Rendering
 
-There are two builds, and **both read the same markdown chapters**, so they cannot drift
-apart in content. Rebuild both after editing any chapter.
+The report is built with LaTeX:
 
-| Command | Output | Use it for |
-|---|---|---|
-| `python docs/report/build_report.py` | `report.html`, `report.pdf` | reading on screen, emailing; self-contained single file |
-| `python docs/report/build_latex.py` | `report_latex.tex`, `report_latex.pdf` | submission: clickable contents, PDF bookmarks, numbered figures |
+```bash
+python docs/report/build_report.py          # report.tex + report.pdf
+python docs/report/build_report.py --no-pdf # .tex only, while writing
+```
 
-**The LaTeX build is the one to submit.** Its table of contents is hyperlinked, every entry
-jumping to its section, and the PDF carries a bookmark tree that a reader's sidebar shows,
-so the document can be navigated without scrolling. The 30 DOIs in Chapter 9 are clickable.
-Figures are pulled in as vector PDFs rather than the PNGs the HTML build uses.
+The markdown chapters are the single source of truth; `report.tex` is generated and should
+never be edited by hand, because the next build overwrites it.
+
+**What the build gives you.** The contents page is hyperlinked, every entry jumping to its
+section, and the PDF carries a bookmark tree that a reader's sidebar shows, so the document
+can be navigated without scrolling. The 30 DOIs in Chapter 9 are clickable. Figures are
+pulled in as vector PDFs rather than PNGs.
 
 The engine is Tectonic (`brew install tectonic`), chosen over a full TeX Live because it
-resolves and caches the packages it needs on first run, so the document rebuilds from a
-clean machine without a multi-gigabyte install.
+resolves and caches the packages it needs on first run, so the document rebuilds on a clean
+machine without a multi-gigabyte install.
 
-`build_latex.py` converts the markdown itself rather than shelling out to pandoc, which is
+A headless-Chrome HTML build previously ran alongside this one and was retired on
+2026-09-02: it produced a second document to keep in sync for no benefit the LaTeX output
+did not already cover.
+
+`build_report.py` converts the markdown itself rather than shelling out to pandoc, which is
 not a dependency here. It handles the subset the chapters actually use: headings, tables,
 figures with their captions, block quotes, lists, code spans and links. Two details worth
 knowing if you extend it. Unicode subscripts are rewritten to `\textsubscript`, because the
 default font has no glyph for them and would silently drop the digits from a formula like
-Cu₃(BTC)₂. And figures are placed with `[H]`, holding them where they were written, because
-the chapters were authored assuming a figure sits directly under the sentence introducing
-it.
+Cu₃(BTC)₂. And figures are placed with `[H]`, holding them where they were written,
+because the chapters were authored assuming a figure sits directly under the sentence
+introducing it.
 
-The HTML build follows the exposé's approach, rendering with headless Chrome and reusing the
-stylesheet in `docs/expose.html` for visual consistency, including the SRH logo and the
-section rules.
-
-**Figure numbering is by reading order**, and the numbers in the captions are maintained by
-hand for the HTML build while LaTeX derives its own. They currently agree. If you add a
-figure in the middle of the document, renumber the captions after it or the two builds will
-disagree and the body-text reference in Section 6.3 will point at the wrong figure.
+**Figure numbering is by reading order.** LaTeX numbers the figures itself, straight
+through rather than per chapter, and the builder strips the `**Figure N.**` prefix the
+markdown captions carry so the number is not printed twice. Those manual numbers therefore
+only matter to someone reading the markdown directly, with one exception that does matter:
+Section 6.3 refers to "Figure 6" in its body text. If you insert a figure before it, that
+reference silently points at the wrong figure. Renumber the captions after any insertion,
+or replace the body-text reference with a real cross-reference.
 
 ## Figures
 

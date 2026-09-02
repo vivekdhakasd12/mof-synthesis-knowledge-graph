@@ -71,7 +71,6 @@ llm_cache/
 # The rendered report is a deliverable, not a build artefact: it is what a reader
 # arriving at this repository actually wants to open.
 !docs/report/*.pdf
-!docs/report/*.html
 # Tectonic's build log, which is regenerated on every compile.
 docs/report/*.log
 
