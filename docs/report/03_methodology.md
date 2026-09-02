@@ -25,6 +25,14 @@ what makes the object of those relations the substantive claim. And MENTIONED_IN
 produced by an extractor: it is attached by the pipeline from passage metadata, so that
 provenance cannot be hallucinated.
 
+![The ontology: nine entity types and nine relations](figures/ontology_schema.png)
+
+**Figure 1.** The ontology as held in `configs/ontology.json`. Solvent and Condition are
+reachable only through SynthesisMethod, which is why the object of those two relations rather
+than the subject carries the substantive claim. MENTIONED_IN is drawn dashed and outside the
+flow because the pipeline attaches it from passage metadata, so it is never produced by an
+extractor.
+
 The type literals in the extraction interface are checked against the ontology file by
 automated tests, so the two cannot drift apart silently.
 
@@ -82,7 +90,7 @@ The threshold is a declared choice, not an accident. Its sensitivity is:
 
 ![Corpus funnel and synthesis-score threshold sensitivity](figures/fig5_corpus_and_threshold.png)
 
-**Figure 1.** Left, the corpus funnel from collection to the gold standard, on a log scale
+**Figure 2.** Left, the corpus funnel from collection to the gold standard, on a log scale
 because each stage is roughly an order of magnitude smaller than the last. Right, the same
 threshold sensitivity as the table, shown as a curve so the chosen cutoff of 0.45 can be seen
 sitting on the shoulder of the curve rather than at an arbitrary point on a steep slope.

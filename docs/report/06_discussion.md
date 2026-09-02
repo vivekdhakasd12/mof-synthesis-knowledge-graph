@@ -80,7 +80,7 @@ reached the wrong conclusion for no better reason than not having checked.
 
 The rule baseline names a MOF in only 121 of the 794 synthesis passages in the full corpus,
 about 15 percent (Section 8.3; reproducible with
-`python -m src.pipeline --extractors rule_based --no-resume`). Figure 6 shows where the other
+`python -m src.pipeline --extractors rule_based --no-resume`). Figure 8 shows where the other
 673 passages go. 331 name the MOF somewhere else in the paper, usually at first mention
 rather than in the synthesis paragraph itself, and 251 use a generic label like "compound 1"
 that only resolves to an actual chemical identity through a table or a cross-reference the
@@ -89,7 +89,7 @@ authors that no fixed dictionary could have anticipated.
 
 ![Why the rule baseline cannot name the material](figures/fig6_baseline_failure_modes.png)
 
-**Figure 6.** The rule baseline's dominant failure is not a missing dictionary entry.
+**Figure 8.** The rule baseline's dominant failure is not a missing dictionary entry.
 Coreference across a paper and generic numbered designations together account for more than
 four times as many passages as successful MOF identification.
 

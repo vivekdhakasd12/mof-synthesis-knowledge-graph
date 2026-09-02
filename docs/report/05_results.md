@@ -52,7 +52,7 @@ model configuration scores 0.191 against the baseline's 0.112.
 
 ![Accuracy against cost for all ten configurations](figures/fig1_cost_vs_f1.png)
 
-**Figure 2.** Accuracy against cost. The relationship is the finding: the strongest
+**Figure 4.** Accuracy against cost. The relationship is the finding: the strongest
 configuration sits at the far left, and the most expensive configuration scores lower than
 one costing a forty-seventh as much. Free-tier models are plotted at zero marginal cost.
 Marker shape encodes model family in addition to colour, so the figure survives greyscale
@@ -64,7 +64,7 @@ visible:
 
 ![Precision against recall for all ten configurations, with iso-F1 contours](figures/fig4_precision_recall.png)
 
-**Figure 3.** Precision against recall. Every language-model configuration sits above and to
+**Figure 5.** Precision against recall. Every language-model configuration sits above and to
 the right of the rule baseline on both axes, not only on the combined score. Recall varies
 more across the ten configurations than precision does, which is the more actionable
 observation for anyone tuning a prompt: the strategies mostly differ in how much they find,
@@ -91,7 +91,7 @@ averages approximately 0.53 across the three remaining fields.
 
 ![Per-field F1 for four representative extractors](figures/fig2_per_field_f1.png)
 
-**Figure 4.** Per-field F1 for four representative configurations, with the number of gold
+**Figure 6.** Per-field F1 for four representative configurations, with the number of gold
 triples printed on each axis label. Support is shown in the figure rather than only in the
 caption so that fields backed by different amounts of evidence are not compared silently.
 
@@ -116,7 +116,7 @@ roughly six times more per call and bought nothing measurable here.
 
 ![Prompting strategy by commercial model](figures/fig3_prompting_strategies.png)
 
-**Figure 5.** Prompting strategy by model. Only the two commercial models appear: just one of
+**Figure 7.** Prompting strategy by model. Only the two commercial models appear: just one of
 the open-weight model's four strategies completed within the free-tier token cap, and placing
 a single point beside two complete sets would invite a comparison the data cannot support.
 

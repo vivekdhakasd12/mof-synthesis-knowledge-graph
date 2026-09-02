@@ -1,9 +1,18 @@
 \documentclass[11pt,a4paper,oneside]{report}
 \usepackage{fontspec}
 \usepackage{geometry}
-\geometry{a4paper,top=2.6cm,bottom=2.6cm,left=2.6cm,right=2.4cm}
+% 13cm measure, about 72 characters at 11pt. The outer margin is deliberately generous:
+% it is a named column that the wide figures are set into, not slack.
+\geometry{
+  a4paper,
+  top=2.7cm, bottom=2.9cm, left=3.4cm, right=4.6cm,
+  marginparwidth=3.2cm, marginparsep=0.5cm,
+  headsep=0.7cm, footskip=1.2cm
+}
 \usepackage{booktabs}
 \usepackage{tabularx}
+\newcolumntype{L}{>{\raggedright\arraybackslash\hspace{0pt}}X}
+\newcolumntype{R}{>{\raggedleft\arraybackslash\hspace{0pt}}X}
 \usepackage{graphicx}
 \usepackage{microtype}
 \usepackage[table]{xcolor}
@@ -13,34 +22,85 @@
 \usepackage{caption}
 \usepackage{float}
 \usepackage{chngcntr}
-% Figures are numbered straight through rather than per chapter, so the numbers match
-% the captions in the markdown sources and the one reference to "Figure 6" in the text.
+\usepackage{fancyvrb}
+\usepackage{enumitem}
+% Figures and tables are numbered straight through rather than per chapter, so the numbers
+% match the captions in the markdown sources and any reference to them in the body text.
 \counterwithout{figure}{chapter}
+\counterwithout{table}{chapter}
 
 \definecolor{srhorange}{HTML}{E64415}
 \definecolor{ink}{HTML}{1A1A1A}
+\definecolor{slate}{HTML}{555555}
+\definecolor{hair}{HTML}{C9C6C0}
+
+\linespread{1.06}
+\setlength{\parskip}{0.55em}
+\widowpenalty=10000
+\clubpenalty=10000
+\setlist{noitemsep, topsep=4pt, parsep=2pt, leftmargin=1.5em}
 
 % Interactive navigation, which is the point of this build: TOC entries, figure and
-% section references, and the reader's sidebar all become links.
+% section references, and the reader's sidebar all become links. Internal links are ink
+% rather than orange: they are navigation, and colouring every one of them turns the
+% contents page into a field of accent colour. External DOIs stay orange, because there
+% the colour is telling the reader the link leaves the document.
 \usepackage[
-  colorlinks=true, linkcolor=srhorange, citecolor=srhorange, urlcolor=srhorange,
+  colorlinks=true, linkcolor=ink, citecolor=ink, urlcolor=srhorange,
   bookmarks=true, bookmarksopen=true, bookmarksnumbered=true,
   pdftitle={Building and Validating a Metal--Organic Framework Synthesis Knowledge Graph with Large Language Models}, pdfauthor={Devendra Singh Dhakad},
   pdfsubject={Case Study 2, SRH University of Applied Sciences Heidelberg}
 ]{hyperref}
 
-\captionsetup{font=small,labelfont={bf,color=srhorange}}
+% Contents entries without dotted leaders. \@dotsep is a length in mu; setting it absurdly
+% large suppresses the dots without pulling in another package.
+\makeatletter
+\renewcommand{\@dotsep}{10000}
+\makeatother
+
+\captionsetup{
+  font=small, labelfont=bf, labelsep=period,
+  singlelinecheck=false, justification=raggedright, skip=8pt
+}
+\captionsetup[table]{position=top, skip=6pt}
+
 \titleformat{\chapter}[display]
   {\normalfont\huge\bfseries\color{ink}}
   {\color{srhorange}\normalsize\bfseries\MakeUppercase{\chaptertitlename\ \thechapter}}
-  {8pt}{\Huge}
-\titlespacing*{\chapter}{0pt}{0pt}{24pt}
-\titleformat{\section}{\normalfont\large\bfseries\color{ink}}{\color{srhorange}\thesection}{0.6em}{}
+  {10pt}{\Huge}[\vspace{8pt}{\color{hair}\titlerule[0.6pt]}]
+\titlespacing*{\chapter}{0pt}{34pt}{30pt}
+\titleformat{\section}{\normalfont\large\bfseries\color{ink}}{\thesection}{0.6em}{}
+\titlespacing*{\section}{0pt}{20pt}{6pt}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries\color{ink}}{\thesubsection}{0.6em}{}
+\titlespacing*{\subsection}{0pt}{14pt}{4pt}
 
 \pagestyle{fancy}
 \fancyhf{}
-\renewcommand{\headrulewidth}{0pt}
-\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{{\color{hair}\hrule height \headrulewidth width\headwidth}}
+\fancyhead[L]{\small\color{slate}\nouppercase{\leftmark}}
+\fancyhead[R]{\small\color{slate}\thepage}
+\renewcommand{\chaptermark}[1]{\markboth{\thechapter\quad #1}{}}
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \renewcommand{\headrulewidth}{0pt}%
+  \fancyfoot[C]{\small\color{slate}\thepage}%
+}
+
+% Code and the architecture block: smaller, with a hairline in the margin so it reads as
+% an inset. No commandchars, because the block contains literal backslashes and arrows.
+\DefineVerbatimEnvironment{codeblock}{Verbatim}{%
+  fontsize=\footnotesize, frame=leftline, framerule=1.2pt,
+  rulecolor=\color{hair}, framesep=9pt, xleftmargin=12pt
+}
+
+% The pre-registered prediction in 5.1 is quoted rather than paraphrased, and it is the
+% one block quote that carries an argument, so quotes get a hairline and an indent rather
+% than the class default.
+\newenvironment{pullquote}
+  {\begin{list}{}{\setlength{\leftmargin}{1.4em}\setlength{\rightmargin}{0pt}}\item[]%
+   \itshape\color{ink}}
+  {\end{list}}
 
 \setlength{\emergencystretch}{3em}
 \sloppy
@@ -48,34 +108,40 @@
 \begin{document}
 
 \begin{titlepage}
+\thispagestyle{empty}
 \centering
 \includegraphics[width=4.2cm]{../assets/srh_logo.png}
-\vspace{1.4cm}
+\vspace{1.6cm}
 
 {\color{srhorange}\rule{\linewidth}{1.2pt}}
-\vspace{0.9cm}
+\vspace{1.0cm}
 
 {\LARGE\bfseries Building and Validating a Metal--Organic Framework Synthesis Knowledge Graph with Large Language Models\par}
-\vspace{0.9cm}
+\vspace{1.0cm}
 {\color{srhorange}\rule{\linewidth}{1.2pt}}
 
-\vspace{1.8cm}
+\vspace{1.6cm}
 {\large Case Study 2\par}
-\vspace{2.2cm}
+\vspace{0.4cm}
+{\color{slate}\large September 2026\par}
+\vspace{2.4cm}
 
-\begin{tabular}{rl}
-\textbf{Author}         & Devendra Singh Dhakad \\[3pt]
-\textbf{Matriculation}  & 100004684 \\[3pt]
-\textbf{Programme}      & M.Sc. Data Science and Artificial Intelligence \\[3pt]
-\textbf{Supervisor}     & Prof. Dr. Mehrdad Jalali \\[3pt]
+\begin{tabular}{@{}rl@{}}
+\textbf{Author}         & Devendra Singh Dhakad \\[4pt]
+\textbf{Matriculation}  & 100004684 \\[4pt]
+\textbf{Programme}      & M.Sc. Data Science and Artificial Intelligence \\[4pt]
+\textbf{Supervisor}     & Prof. Dr. Mehrdad Jalali \\[4pt]
 \textbf{University}     & SRH University of Applied Sciences Heidelberg \\
 \end{tabular}
 
 \vfill
-{\small Compiled from the chapter sources in \texttt{docs/report/}.\par}
 \end{titlepage}
 
+\pdfbookmark[0]{Contents}{toc}
 \tableofcontents
+\clearpage
+\pdfbookmark[0]{List of Figures}{lof}
+\listoffigures
 \clearpage
 
 
@@ -192,10 +258,11 @@ This work occupies that gap. It is deliberately small in scale where the cited w
 
 \section{Ontology}
 
-The extraction target is defined by a MOF-specific ontology (v0.2) held in \texttt{configs/ontology.json}, which is the single source of truth for the type system. Nine entity types are defined: MOF, MetalPrecursor, OrganicLinker, Solvent, SynthesisMethod, Condition, Property, Application and Paper. Nine relations connect them:
+The extraction target is defined by a MOF-specific ontology (v0.2) held in \texttt{configs/\allowbreak{}ontology.\allowbreak{}json}, which is the single source of truth for the type system. Nine entity types are defined: MOF, MetalPrecursor, OrganicLinker, Solvent, SynthesisMethod, Condition, Property, Application and Paper. Nine relations connect them:
 
-\begin{center}
-\small
+\par\medskip
+\begingroup
+\small\setlength{\tabcolsep}{6pt}
 \begin{tabular}{@{}lrr@{}}
 \toprule
 \textbf{Relation} & \textbf{From} & \textbf{To} \\
@@ -211,8 +278,16 @@ USED\_IN & MOF & Application \\
 MENTIONED\_IN & any & Paper \\
 \bottomrule
 \end{tabular}
-\end{center}
+\endgroup
+\par\medskip
 Two design decisions in this table matter later. Solvents and conditions attach to a synthesis method rather than directly to the MOF, so the method acts as a connector; this is what makes the object of those relations the substantive claim. And MENTIONED\_IN is never produced by an extractor: it is attached by the pipeline from passage metadata, so that provenance cannot be hallucinated.
+
+
+\begin{figure}[H]
+\noindent\makebox[\linewidth][l]{\includegraphics[width=\dimexpr\linewidth+\marginparsep+\marginparwidth\relax]{figures/ontology_schema.pdf}}
+\caption{The ontology as held in \texttt{configs/\allowbreak{}ontology.\allowbreak{}json}. Solvent and Condition are reachable only through SynthesisMethod, which is why the object of those two relations rather than the subject carries the substantive claim. MENTIONED\_IN is drawn dashed and outside the flow because the pipeline attaches it from passage metadata, so it is never produced by an extractor.}
+\label{fig:ontology_schema}
+\end{figure}
 
 The type literals in the extraction interface are checked against the ontology file by automated tests, so the two cannot drift apart silently.
 
@@ -220,7 +295,7 @@ The type literals in the extraction interface are checked against the ontology f
 
 Papers were collected from the Europe PMC open-access subset, which exposes structured JATS full text with labelled sections. This was preferred over publisher scraping and PDF parsing because section labels are given rather than inferred, which the segmentation step depends on.
 
-The query was \texttt{(metal-organic framework AND synthesis) AND OPEN\_ACCESS:y AND HAS\_FT:y AND IN\_EPMC:y}. The collected corpus is \textbf{399 papers and 20,582,200 characters}, every one carrying a DOI. Licences are 299 CC BY, 56 CC BY-NC-ND, 43 CC BY-NC and 2 unrecognised, the last of which are excluded from redistribution pending verification.
+The query was \texttt{(metal-\allowbreak{}organic framework AND synthesis) AND OPEN\_\allowbreak{}ACCESS:y AND HAS\_\allowbreak{}FT:y AND IN\_\allowbreak{}EPMC:y}. The collected corpus is \textbf{399 papers and 20,582,200 characters}, every one carrying a DOI. Licences are 299 CC BY, 56 CC BY-NC-ND, 43 CC BY-NC and 2 unrecognised, the last of which are excluded from redistribution pending verification.
 
 Publisher distribution by DOI prefix is RSC 107, MDPI 78, ACS 75, Nature 40, Wiley 40, Elsevier 11 and a long tail. This matters for RQ3: RSC, ACS and Wiley are the publishers DigiMOF drew from, so an open-access Europe PMC corpus does overlap the reference database's source population.
 
@@ -238,8 +313,9 @@ Segmentation produces \textbf{22,086 passages}, of which \textbf{794 across 224 
 
 The threshold is a declared choice, not an accident. Its sensitivity is:
 
-\begin{center}
-\small
+\par\medskip
+\begingroup
+\small\setlength{\tabcolsep}{6pt}
 \begin{tabular}{@{}lrr@{}}
 \toprule
 \textbf{Cutoff} & \textbf{Passages} & \textbf{Papers} \\
@@ -251,11 +327,11 @@ The threshold is a declared choice, not an accident. Its sensitivity is:
 0.65 & 268 & 149 \\
 \bottomrule
 \end{tabular}
-\end{center}
+\endgroup
+\par\medskip
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=\linewidth]{figures/fig5_corpus_and_threshold.pdf}
+\noindent\makebox[\linewidth][l]{\includegraphics[width=\dimexpr\linewidth+\marginparsep+\marginparwidth\relax]{figures/fig5_corpus_and_threshold.pdf}}
 \caption{Left, the corpus funnel from collection to the gold standard, on a log scale because each stage is roughly an order of magnitude smaller than the last. Right, the same threshold sensitivity as the table, shown as a curve so the chosen cutoff of 0.45 can be seen sitting on the shoulder of the curve rather than at an arbitrary point on a steep slope.}
 \label{fig:fig5_corpus_and_threshold}
 \end{figure}
@@ -272,9 +348,10 @@ The sample size was reduced from the 150 to 200 stated in the exposé, on 2026-0
 
 \textbf{Result.} 100 records containing \textbf{138 triples}. 32 passages contain synthesis records and 68 do not. Per-relation support is:
 
-\begin{center}
-\small
-\begin{tabularx}{\linewidth}{@{}Xr@{}}
+\par\medskip
+\begingroup
+\small\setlength{\tabcolsep}{6pt}
+\begin{tabularx}{\linewidth}{@{}Lr@{}}
 \toprule
 \textbf{Relation} & \textbf{Support} \\
 \midrule
@@ -286,7 +363,8 @@ SYNTHESIZED\_BY & 1 \\
 HAS\_PROPERTY, MEASURED\_AT, USED\_IN & 0 \\
 \bottomrule
 \end{tabularx}
-\end{center}
+\endgroup
+\par\medskip
 Only the first four relations carry enough support to support a conclusion. The scarcity of the others is itself a finding about where information sits in a paper: properties and applications are rarely stated inside a synthesis paragraph.
 
 \section{Extractors}
@@ -311,49 +389,58 @@ Two matching modes are implemented, exact and relaxed, both built on a single sh
 \chapter{Implementation}
 
 
-The system is roughly 7,100 lines of Python across twenty modules, covered by 199 tests. This chapter describes the parts whose design was load bearing, and states the reasoning where a different choice was available. Implementation detail that follows obviously from Chapter 3 is omitted.
+The system is roughly 7,500 lines of Python across twenty-one modules, covered by 216 tests. This chapter describes the parts whose design was load bearing, and states the reasoning where a different choice was available. Implementation detail that follows obviously from Chapter 3 is omitted.
 
 \section{Architecture}
 
 The pipeline is a sequence of stages, each writing a file the next stage reads:
 
-{\footnotesize\begin{verbatim}
+\begin{codeblock}
 Europe PMC  ->  corpus.jsonl  ->  passages.jsonl  ->  results.jsonl  ->  evaluation.json
                                         |                   |
                                    gold.jsonl           Neo4j graph
-\end{verbatim}}
+\end{codeblock}
 
 Stages communicate through JSON Lines on disk rather than in-process objects. That costs some speed and buys three things that mattered more: any stage can be rerun without repeating the ones before it, intermediate state can be inspected with ordinary command-line tools when a result looks wrong, and a stage that crashes leaves everything before it intact. During development every one of those properties was used.
 
-\begin{center}
-\small
-\begin{tabularx}{\linewidth}{@{}XXr@{}}
+
+\begin{figure}[H]
+\noindent\makebox[\linewidth][l]{\includegraphics[width=\dimexpr\linewidth+\marginparsep+\marginparwidth\relax]{figures/pipeline_architecture.pdf}}
+\caption{The same pipeline as the block above, drawn in full. Every arrow leaving a stage writes a file and every arrow entering one reads a file, so the alternation between the two columns is the disk boundary described here. The rule-based and language-model strands sit inside a single stage because they implement one interface.}
+\label{fig:pipeline_architecture}
+\end{figure}
+
+\par\medskip
+\begingroup
+\small\setlength{\tabcolsep}{6pt}
+\begin{tabularx}{\linewidth}{@{}LLr@{}}
 \toprule
 \textbf{Package} & \textbf{Responsibility} & \textbf{Lines} \\
 \midrule
-\texttt{src/ingestion} & Europe PMC access, JATS parsing, passage segmentation & 980 \\
-\texttt{src/extraction} & Extractor interface, rule baseline, language models, response cache & 2,221 \\
-\texttt{src/evaluation} & Per-field metrics, evaluation runner, figures & 1,764 \\
-\texttt{src/kg} & Neo4j schema, provenance-writing loader, named research queries & 462 \\
-\texttt{src/annotation} & Gold standard annotation tool & 1,169 \\
-\texttt{src/normalize.py} & Shared chemical-name normalisation & 180 \\
-\texttt{src/pipeline.py} & Resumable experiment runner & 288 \\
+\texttt{src/\allowbreak{}ingestion} & Europe PMC access, JATS parsing, passage segmentation & 980 \\
+\texttt{src/\allowbreak{}extraction} & Extractor interface, rule baseline, language models, response cache & 2,221 \\
+\texttt{src/\allowbreak{}evaluation} & Per-field metrics, evaluation runner, reference-database join, figures & 2,196 \\
+\texttt{src/\allowbreak{}kg} & Neo4j schema, provenance-writing loader, named research queries & 462 \\
+\texttt{src/\allowbreak{}annotation} & Gold standard annotation tool & 1,169 \\
+\texttt{src/\allowbreak{}normalize.\allowbreak{}py} & Shared chemical-name normalisation & 180 \\
+\texttt{src/\allowbreak{}pipeline.\allowbreak{}py} & Resumable experiment runner & 288 \\
 \bottomrule
 \end{tabularx}
-\end{center}
+\endgroup
+\par\medskip
 \section{The unified extractor interface}
 
 The single most consequential design decision is that every extraction strategy, rule-based and language-model alike, implements one interface and returns the same shape:
 
-{\footnotesize\begin{verbatim}
+\begin{codeblock}
 class Extractor(ABC):
     name: str
     @abstractmethod
     def extract(self, passage: str, *, paper_id: str | None = None,
                 section: str | None = None) -> ExtractionResult: ...
-\end{verbatim}}
+\end{codeblock}
 
-\texttt{ExtractionResult} carries the extracted triples together with \texttt{cost\_usd}, \texttt{latency\_ms} and \texttt{errors}. Two properties of this contract shaped everything downstream.
+\texttt{ExtractionResult} carries the extracted triples together with \texttt{cost\_\allowbreak{}usd}, \texttt{latency\_\allowbreak{}ms} and \texttt{errors}. Two properties of this contract shaped everything downstream.
 
 \textbf{Extractors must not raise.} A provider outage, a malformed response or an unparseable passage becomes an entry in \texttt{errors}, never an exception. The reason is operational: a run is 1,300 sequential calls over roughly an hour, and losing all of it to one awkward passage is unacceptable. The runner still wraps every call in a guard, and a raised exception is recorded as a contract violation, which is itself a reportable finding rather than a crash.
 
@@ -361,19 +448,19 @@ class Extractor(ABC):
 
 \section{Ingestion}
 
-\texttt{europepmc.py} queries the open-access subset and fetches JATS full text, caching every response to disk so a paper is never downloaded twice. \texttt{parse.py} converts JATS into labelled sections using namespace-agnostic XPath, because JATS documents may or may not declare a namespace, and flattens inline markup with \texttt{itertext()} so that italics or formulae inside a sentence do not fragment it.
+\texttt{europepmc.\allowbreak{}py} queries the open-access subset and fetches JATS full text, caching every response to disk so a paper is never downloaded twice. \texttt{parse.\allowbreak{}py} converts JATS into labelled sections using namespace-agnostic XPath, because JATS documents may or may not declare a namespace, and flattens inline markup with \texttt{itertext()} so that italics or formulae inside a sentence do not fragment it.
 
-\texttt{segment.py} splits sections into passages with character offsets preserved and assigns each a deterministic identifier derived from paper, section, section occurrence and index. Determinism is not cosmetic: the gold standard references these identifiers, so a corpus rebuild that renumbered passages would silently invalidate every annotation.
+\texttt{segment.\allowbreak{}py} splits sections into passages with character offsets preserved and assigns each a deterministic identifier derived from paper, section, section occurrence and index. Determinism is not cosmetic: the gold standard references these identifiers, so a corpus rebuild that renumbered passages would silently invalidate every annotation.
 
 That property was tested rather than assumed, and the test failed. Seventeen identifiers collided, which traced not to the segmenter but to the collector: Europe PMC had returned one paper on two cursor pages and nothing deduplicated it. Deduplication by PMCID and DOI was added at collection.
 
 \section{Extraction}
 
-\textbf{The rule-based baseline} (\texttt{rule\_based.py}, 1,040 lines) keeps its entire vocabulary in one marked block so the lexicon can be cited and extended without reading the control flow. Entity names are the literal substring of the passage, so \texttt{passage[start:end] == name} holds and every span is a genuine provenance pointer; canonical forms are produced on demand by the shared normaliser rather than by rewriting the name, which would break that correspondence.
+\textbf{The rule-based baseline} (\texttt{rule\_\allowbreak{}based.\allowbreak{}py}, 1,040 lines) keeps its entire vocabulary in one marked block so the lexicon can be cited and extended without reading the control flow. Entity names are the literal substring of the passage, so \texttt{passage[start:end] == name} holds and every span is a genuine provenance pointer; canonical forms are produced on demand by the shared normaliser rather than by rewriting the name, which would break that correspondence.
 
 It attempts implicit synthesis routes rather than skipping them. An organic solvent with a temperature above a documented threshold and no route word anywhere in the passage is emitted as "solvothermal" with low confidence and a null span, the null span marking it as inferred so that explicit and inferred routes can be scored separately. Skipping these would have flattered the baseline's precision and understated its recall, which would have made the comparison this project exists to draw less honest rather than more.
 
-\textbf{The language-model extractors} (\texttt{llm\_extractor.py}, 861 lines) separate the provider from the strategy. An \texttt{LLMClient} protocol has one method, so OpenAI, Anthropic, Groq and NVIDIA differ only in a base URL and an environment variable, and tests inject a deterministic fake client. An autouse fixture severs \texttt{socket.socket} for the whole offline suite, so "these tests do not touch the network" is enforced by the suite rather than asserted in a comment.
+\textbf{The language-model extractors} (\texttt{llm\_\allowbreak{}extractor.\allowbreak{}py}, 861 lines) separate the provider from the strategy. An \texttt{LLMClient} protocol has one method, so OpenAI, Anthropic, Groq and NVIDIA differ only in a base URL and an environment variable, and tests inject a deterministic fake client. An autouse fixture severs \texttt{socket.\allowbreak{}socket} for the whole offline suite, so "these tests do not touch the network" is enforced by the suite rather than asserted in a comment.
 
 Response parsing is deliberately defensive. Models wrap JSON in prose or code fences, emit trailing commas, return an object where a list was requested, and occasionally invent relation types. Everything recoverable is recovered; everything else is recorded. Triples whose endpoints violate the ontology are dropped with the reason logged, which turns model misbehaviour into the error taxonomy of Chapter 5 rather than into silent contamination of the results.
 
@@ -383,25 +470,25 @@ One defect found here is worth recording because of what it would have cost. An 
 
 Two mechanisms make repeated experimentation affordable, which for a self-funded project is a functional requirement rather than an optimisation.
 
-\textbf{The response cache} (\texttt{cache.py}) keys on a hash of provider, model, prompt template name and version, strategy, passage text, temperature and maximum tokens. The template \emph{version} is part of the key so that editing a prompt correctly invalidates its cached answers instead of silently mixing responses to two different prompts. The key function takes keyword arguments only: a positional call site that swapped model and strategy would produce a plausible but wrong key, and that failure would surface as inexplicable cache misses rather than as an error.
+\textbf{The response cache} (\texttt{cache.\allowbreak{}py}) keys on a hash of provider, model, prompt template name and version, strategy, passage text, temperature and maximum tokens. The template \emph{version} is part of the key so that editing a prompt correctly invalidates its cached answers instead of silently mixing responses to two different prompts. The key function takes keyword arguments only: a positional call site that swapped model and strategy would produce a plausible but wrong key, and that failure would surface as inexplicable cache misses rather than as an error.
 
-\textbf{The runner} (\texttt{pipeline.py}) is resumable on \texttt{(passage\_id, extractor)} and flushes after every row, so an interrupted run loses at most the call in flight and a rerun re-bills nothing. It also retries on rate limits using the delay the provider itself states, after an early run discarded 76 of 100 passages by treating a two-second throttle as a permanent failure.
+\textbf{The runner} (\texttt{pipeline.\allowbreak{}py}) is resumable on \texttt{(passage\_\allowbreak{}id, extractor)} and flushes after every row, so an interrupted run loses at most the call in flight and a rerun re-bills nothing. It also retries on rate limits using the delay the provider itself states, after an early run discarded 76 of 100 passages by treating a two-second throttle as a permanent failure.
 
 \section{Knowledge graph}
 
-\texttt{kg/loader.py} writes provenance as structure. Every entity receives a \texttt{MENTIONED\_IN} edge to its source paper carrying section and evidence sentence, and every relation edge carries the evidence, extractor and confidence. Loading is idempotent, using \texttt{MERGE} on a normalised key rather than \texttt{CREATE} on the surface form, so a reproducibility rerun cannot inflate the graph statistics reported in this document.
+\texttt{kg/\allowbreak{}loader.\allowbreak{}py} writes provenance as structure. Every entity receives a \texttt{MENTIONED\_\allowbreak{}IN} edge to its source paper carrying section and evidence sentence, and every relation edge carries the evidence, extractor and confidence. Loading is idempotent, using \texttt{MERGE} on a normalised key rather than \texttt{CREATE} on the surface form, so a reproducibility rerun cannot inflate the graph statistics reported in this document.
 
-\texttt{kg/queries.py} holds the research queries as named constants rather than leaving them to be typed into a browser, because they are evidence for a research question and must be rerunnable. One of them, \texttt{provenance\_violations}, returns any entity lacking a link to a source paper. It is included specifically so the central integrity claim of this project can be checked by a reader rather than trusted. It returns zero rows.
+\texttt{kg/\allowbreak{}queries.\allowbreak{}py} holds the research queries as named constants rather than leaving them to be typed into a browser, because they are evidence for a research question and must be rerunnable. One of them, \texttt{provenance\_\allowbreak{}violations}, returns any entity lacking a link to a source paper. It is included specifically so the central integrity claim of this project can be checked by a reader rather than trusted. It returns zero rows.
 
 \section{Evaluation}
 
-\texttt{evaluation/metrics.py} implements per-field scoring with greedy one-to-one assignment, so a duplicate-emitting extractor cannot match one gold triple repeatedly and inflate its precision. Matching is built on the same \texttt{src/normalize.py} used by the graph loader. That sharing is the point: if the evaluation decided that \texttt{H3BTC} matched \texttt{trimesic acid} while the loader created two separate nodes, the reported accuracy and the delivered artefact would disagree about what the data contains.
+\texttt{evaluation/\allowbreak{}metrics.\allowbreak{}py} implements per-field scoring with greedy one-to-one assignment, so a duplicate-emitting extractor cannot match one gold triple repeatedly and inflate its precision. Matching is built on the same \texttt{src/\allowbreak{}normalize.\allowbreak{}py} used by the graph loader. That sharing is the point: if the evaluation decided that \texttt{H3BTC} matched \texttt{trimesic acid} while the loader created two separate nodes, the reported accuracy and the delivered artefact would disagree about what the data contains.
 
-\texttt{evaluation/figures.py} generates every figure from \texttt{evaluation.json}, so no number in a chart is transcribed by hand and none can drift from the table beside it.
+\texttt{evaluation/\allowbreak{}figures.\allowbreak{}py} generates every figure from \texttt{evaluation.\allowbreak{}json}, so no number in a chart is transcribed by hand and none can drift from the table beside it.
 
 \section{Reproducibility and quality gates}
 
-Python is pinned to 3.11 (a spaCy dependency has no 3.13 wheels). Neo4j runs from \texttt{docker-compose.yml}, so the database is a declared version rather than a local installation. Every commit passes \texttt{ruff}, \texttt{ruff format}, \texttt{mypy} on all source files, and 199 tests. Coverage is 73 percent, concentrated on the modules where a silent error would corrupt a result: the normaliser, the metrics and the extractors.
+Python is pinned to 3.11 (a spaCy dependency has no 3.13 wheels). Neo4j runs from \texttt{docker-\allowbreak{}compose.\allowbreak{}yml}, so the database is a declared version rather than a local installation. Every commit passes \texttt{ruff}, \texttt{ruff format}, \texttt{mypy} on all source files, and 216 tests. Coverage is 71 percent, concentrated on the modules where a silent error would corrupt a result: the normaliser, the metrics and the extractors.
 
 The whole study is reproducible from a clean checkout with the commands in the repository README. The response cache means a rerun of the analysis costs nothing; only a deliberate cache clear re-incurs API spend.
 
@@ -409,21 +496,22 @@ The whole study is reproducible from a clean checkout with the commands in the r
 \chapter{Results}
 
 
-All figures below were produced by the pipeline in this repository and can be regenerated with \texttt{bash scripts/run\_experiments.sh} followed by \texttt{python -m src.evaluation.run\_eval --mode relaxed}. Ten extractor configurations were run over 100 gold passages containing 138 annotated triples, for a total API spend of 3.06 USD. Every configuration reported here covers all 100 passages; two were removed rather than reported from partial data, as described in Section 5.6.
+All figures below were produced by the pipeline in this repository and can be regenerated with \texttt{bash scripts/\allowbreak{}run\_\allowbreak{}experiments.\allowbreak{}sh} followed by \texttt{python -\allowbreak{}m src.\allowbreak{}evaluation.\allowbreak{}run\_\allowbreak{}eval -\allowbreak{}-\allowbreak{}mode relaxed}. Ten extractor configurations were run over 100 gold passages containing 138 annotated triples, for a total API spend of 3.06 USD. Every configuration reported here covers all 100 passages; two were removed rather than reported from partial data, as described in Section 5.6.
 
 \section{The pre-registered prediction}
 
-Before any language model was run, the following prediction was recorded in \texttt{docs/baseline\_findings.md}, on the basis that conditions and solvents are matched by local surface patterns that rules already handle well, whereas identifying which material is being made is not:
+Before any language model was run, the following prediction was recorded in \texttt{docs/\allowbreak{}baseline\_\allowbreak{}findings.\allowbreak{}md}, on the basis that conditions and solvents are matched by local surface patterns that rules already handle well, whereas identifying which material is being made is not:
 
-\begin{quote}
+\begin{pullquote}
 The LLM margin over the rule baseline should be largest on USES\_PRECURSOR and USES\_LINKER, and smallest on AT\_CONDITION and IN\_SOLVENT.
-\end{quote}
+\end{pullquote}
 
 Measured, comparing the best language-model configuration with the rule baseline:
 
-\begin{center}
-\small
-\begin{tabularx}{\linewidth}{@{}lrrrX@{}}
+\par\medskip
+\begingroup
+\small\setlength{\tabcolsep}{6pt}
+\begin{tabularx}{\linewidth}{@{}lRRrL@{}}
 \toprule
 \textbf{Field} & \textbf{Rule baseline F1} & \textbf{Best LLM F1} & \textbf{Margin} & \textbf{Predicted rank} \\
 \midrule
@@ -433,16 +521,18 @@ IN\_SOLVENT & 0.23 & 0.48 & +0.25 & smaller, confirmed \\
 AT\_CONDITION & 0.00 & 0.17 & +0.17 & smallest, confirmed \\
 \bottomrule
 \end{tabularx}
-\end{center}
+\endgroup
+\par\medskip
 The ordering matches the prediction exactly. Because the prediction was committed to the repository before the models were run, this is a confirmation rather than a pattern identified after the fact.
 
 \section{Overall performance}
 
 Relaxed matching, micro-averaged over all scored relations:
 
-\begin{center}
-\small
-\begin{tabularx}{\linewidth}{@{}Xrrrrr@{}}
+\par\medskip
+\begingroup
+\small\setlength{\tabcolsep}{6pt}
+\begin{tabularx}{\linewidth}{@{}LrrrrR@{}}
 \toprule
 \textbf{Extractor} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{Cost (USD)} & \textbf{Mean latency} \\
 \midrule
@@ -458,7 +548,8 @@ qwen3.8-27b zero-shot (open weight) & 0.136 & 0.319 & 0.191 & 0.000 & 13.2 s \\
 rule-based baseline & 0.098 & 0.130 & 0.112 & 0.000 & 0.001 s \\
 \bottomrule
 \end{tabularx}
-\end{center}
+\endgroup
+\par\medskip
 Every language-model configuration outperforms the rule-based baseline. The weakest language model configuration scores 0.191 against the baseline's 0.112.
 
 
@@ -483,8 +574,9 @@ F1 collapses precision and recall into one number, which hides whether a configu
 
 For the strongest configuration, gpt-4o-mini with schema-guided prompting:
 
-\begin{center}
-\small
+\par\medskip
+\begingroup
+\small\setlength{\tabcolsep}{6pt}
 \begin{tabular}{@{}lrrrrrrr@{}}
 \toprule
 \textbf{Field} & \textbf{P} & \textbf{R} & \textbf{F1} & \textbf{TP} & \textbf{FP} & \textbf{FN} & \textbf{Support} \\
@@ -495,7 +587,8 @@ IN\_SOLVENT & 0.485 & 0.471 & 0.478 & 16 & 17 & 18 & 34 \\
 AT\_CONDITION & 0.140 & 0.206 & 0.167 & 7 & 43 & 27 & 34 \\
 \bottomrule
 \end{tabular}
-\end{center}
+\endgroup
+\par\medskip
 Support counts are printed beside every score deliberately. SYNTHESIZED\_BY has a support of 1 and HAS\_PROPERTY, MEASURED\_AT and USED\_IN have a support of 0, so no conclusion is drawn about them; where a model emits triples for those relations they appear only as false positives, which is why HAS\_PROPERTY shows 21 false positives against zero support.
 
 Excluding AT\_CONDITION, whose behaviour is explained in Section 5.5, the best configuration averages approximately 0.53 across the three remaining fields.
@@ -512,17 +605,19 @@ Excluding AT\_CONDITION, whose behaviour is explained in Section 5.5, the best c
 
 \textbf{Prompting strategies}, commercial models, all four strategies complete:
 
-\begin{center}
-\small
-\begin{tabular}{@{}lrrrr@{}}
+\par\medskip
+\begingroup
+\small\setlength{\tabcolsep}{6pt}
+\begin{tabularx}{\linewidth}{@{}lrrRR@{}}
 \toprule
 \textbf{Model} & \textbf{zero-shot} & \textbf{few-shot} & \textbf{schema-guided} & \textbf{chain-of-thought} \\
 \midrule
 gpt-4o-mini & 0.287 & 0.249 & \textbf{0.364} & 0.277 \\
 gpt-4o & 0.247 & 0.245 & 0.263 & \textbf{0.278} \\
 \bottomrule
-\end{tabular}
-\end{center}
+\end{tabularx}
+\endgroup
+\par\medskip
 Schema-guided prompting wins clearly on the stronger configuration, supporting the premise that constraining output to the ontology helps. It does not win universally: on gpt-4o, chain-of-thought leads by 0.015, a margin a 138-triple gold standard cannot resolve. The defensible claim is that schema-guided is the best single choice observed, not that it dominates.
 
 Few-shot is the weakest strategy on both models despite having by far the most expensive prompt, 4,054 template tokens against 652 for schema-guided. The worked examples cost roughly six times more per call and bought nothing measurable here.
@@ -537,9 +632,10 @@ Few-shot is the weakest strategy on both models despite having by far the most e
 
 \textbf{Open weight against commercial}, compared like for like on zero-shot, the one strategy where all three models have complete coverage, so that model and strategy are not confounded:
 
-\begin{center}
-\small
-\begin{tabularx}{\linewidth}{@{}Xrrr@{}}
+\par\medskip
+\begingroup
+\small\setlength{\tabcolsep}{6pt}
+\begin{tabularx}{\linewidth}{@{}LrrR@{}}
 \toprule
 \textbf{Model} & \textbf{F1} & \textbf{Cost (USD)} & \textbf{Mean latency} \\
 \midrule
@@ -549,7 +645,8 @@ qwen3.8-27b (open weight) & 0.191 & 0.000 & 13.2 s \\
 rule-based baseline & 0.112 & 0.000 & 0.001 s \\
 \bottomrule
 \end{tabularx}
-\end{center}
+\endgroup
+\par\medskip
 The ordering is commercial, then open weight, then rules. The open-weight model reaches approximately two thirds of the best commercial F1 at zero marginal cost and roughly four times the latency, the latter being a property of the free serving tier rather than of the model.
 
 \textbf{The cheaper commercial model outperforms the more expensive one.} gpt-4o-mini beats gpt-4o on three of four prompting strategies. The strongest configuration overall costs 0.028 USD; the most expensive configuration, gpt-4o few-shot, costs 1.289 USD and scores lower, a 47-fold cost difference in favour of the weaker model. Chapter 6 discusses the likely mechanism.
@@ -558,13 +655,14 @@ The ordering is commercial, then open weight, then rules. The open-weight model 
 
 Loading the rule-based extractions over all 794 synthesis passages produced a graph of \textbf{485 distinct nodes and 2,429 relationships across 182 papers}, from 1,864 triples with zero skipped and zero load errors. Entity resolution collapses 3,728 node merge operations into 485 distinct nodes.
 
-\textbf{Provenance is verified rather than asserted.} The \texttt{provenance\_violations} query, which returns any entity lacking a MENTIONED\_IN edge to a source paper, returns zero rows.
+\textbf{Provenance is verified rather than asserted.} The \texttt{provenance\_\allowbreak{}violations} query, which returns any entity lacking a MENTIONED\_IN edge to a source paper, returns zero rows.
 
 Cross-paper aggregation over synthesis methods:
 
-\begin{center}
-\small
-\begin{tabularx}{\linewidth}{@{}Xrr@{}}
+\par\medskip
+\begingroup
+\small\setlength{\tabcolsep}{6pt}
+\begin{tabularx}{\linewidth}{@{}Lrr@{}}
 \toprule
 \textbf{Method} & \textbf{Papers} & \textbf{MOFs} \\
 \midrule
@@ -576,7 +674,8 @@ stirred at room temperature & 35 & 5 \\
 reflux & 21 & 3 \\
 \bottomrule
 \end{tabularx}
-\end{center}
+\endgroup
+\par\medskip
 DigiMOF reported more hydrothermal (5,677) than solvothermal (3,672) records and described that ordering as surprising, since solvothermal is the more common laboratory route. This corpus shows the opposite ordering. The difference may reflect corpus composition, an open-access Europe PMC set against a CSD-derived one, or a difference in how each system infers an unnamed route. It is recorded here as an open question rather than resolved.
 
 \section{What is not reported, and why}
@@ -589,15 +688,16 @@ RQ4 therefore rests on a single prompting strategy for the open-weight side.
 
 \section{DigiMOF and SynMOF agreement (RQ3)}
 
-RQ3 asked where and why LLM extractions disagree with the DigiMOF and SynMOF reference databases. This section reports what could be established and, more importantly, what could not. Every number below is produced by \texttt{python -m src.evaluation.build\_reference\_join} followed by \texttt{python -m src.evaluation.agreement\_analysis}, which rebuild the join from the two published source files rather than from a stored intermediate.
+RQ3 asked where and why LLM extractions disagree with the DigiMOF and SynMOF reference databases. This section reports what could be established and, more importantly, what could not. Every number below is produced by \texttt{python -\allowbreak{}m src.\allowbreak{}evaluation.\allowbreak{}build\_\allowbreak{}reference\_\allowbreak{}join} followed by \texttt{python -\allowbreak{}m src.\allowbreak{}evaluation.\allowbreak{}agreement\_\allowbreak{}analysis}, which rebuild the join from the two published source files rather than from a stored intermediate.
 
 \textbf{The two databases were joined on CSD refcode.} DigiMOF's Supporting Information Master sheet holds 24,785 rows covering 24,732 distinct refcodes, and the manually curated SynMOF subset holds 840. Both sides are deduplicated on refcode before joining, because DigiMOF repeats some refcodes and an undeduplicated join returns 513 rows for the same materials. The intersection is \textbf{509 distinct MOFs}.
 
 Field coverage within that intersection:
 
-\begin{center}
-\small
-\begin{tabularx}{\linewidth}{@{}lrX@{}}
+\par\medskip
+\begingroup
+\small\setlength{\tabcolsep}{6pt}
+\begin{tabularx}{\linewidth}{@{}lrL@{}}
 \toprule
 \textbf{Field} & \textbf{Source} & \textbf{Coverage} \\
 \midrule
@@ -610,7 +710,8 @@ Yield & SynMOF & 374/509 (74 percent) \\
 Linker & DigiMOF & 159/509 (31 percent) \\
 \bottomrule
 \end{tabularx}
-\end{center}
+\endgroup
+\par\medskip
 The linker coverage of 31 percent is the notable figure: the field this study cares most about is the one the reference databases are least complete on.
 
 The intersection is dominated by water (351 records) and DMF (217), with a median synthesis temperature of 120 °C and a median reaction time of 72 hours. The leading metals are Cu (109), Zn (100), Cd (68) and Co (60).
@@ -649,12 +750,11 @@ There is a plainer possible explanation too, and I do not want to quietly favour
 
 \section{What the 15 percent MOF-identification rate means for rule-based pipeline maintainers}
 
-The rule baseline names a MOF in only 121 of the 794 synthesis passages in the full corpus, about 15 percent (Section 8.3; reproducible with \texttt{python -m src.pipeline --extractors rule\_based --no-resume}). Figure 6 shows where the other 673 passages go. 331 name the MOF somewhere else in the paper, usually at first mention rather than in the synthesis paragraph itself, and 251 use a generic label like "compound 1" that only resolves to an actual chemical identity through a table or a cross-reference the passage itself does not contain. The remaining 91 are cases such as a name coined by the authors that no fixed dictionary could have anticipated.
+The rule baseline names a MOF in only 121 of the 794 synthesis passages in the full corpus, about 15 percent (Section 8.3; reproducible with \texttt{python -\allowbreak{}m src.\allowbreak{}pipeline -\allowbreak{}-\allowbreak{}extractors rule\_\allowbreak{}based -\allowbreak{}-\allowbreak{}no-\allowbreak{}resume}). Figure 8 shows where the other 673 passages go. 331 name the MOF somewhere else in the paper, usually at first mention rather than in the synthesis paragraph itself, and 251 use a generic label like "compound 1" that only resolves to an actual chemical identity through a table or a cross-reference the passage itself does not contain. The remaining 91 are cases such as a name coined by the authors that no fixed dictionary could have anticipated.
 
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=\linewidth]{figures/fig6_baseline_failure_modes.pdf}
+\noindent\makebox[\linewidth][l]{\includegraphics[width=\dimexpr\linewidth+\marginparsep+\marginparwidth\relax]{figures/fig6_baseline_failure_modes.pdf}}
 \caption{The rule baseline's dominant failure is not a missing dictionary entry. Coreference across a paper and generic numbered designations together account for more than four times as many passages as successful MOF identification.}
 \label{fig:fig6_baseline_failure_modes}
 \end{figure}
@@ -699,23 +799,25 @@ AT\_CONDITION scores between 0.00 and 0.17 for every extractor, with 43 false po
 
 Manual inspection of gold against predicted triples shows correct extractions scored as failures because of surface form. Examples observed:
 
-\begin{center}
-\small
-\begin{tabularx}{\linewidth}{@{}XXX@{}}
+\par\medskip
+\begingroup
+\small\setlength{\tabcolsep}{6pt}
+\begin{tabularx}{\linewidth}{@{}LLL@{}}
 \toprule
 \textbf{Gold} & \textbf{Predicted} & \textbf{Status} \\
 \midrule
 \texttt{ZrOCl\textsubscript{2}·8H\textsubscript{2}O} & \texttt{ZrOCl2·8H2O} & matched, the normaliser handles Unicode subscripts \\
 \texttt{DMF} & \texttt{dimethylformamide (DMF)} & matched only after a fix, see 7.3 \\
-\texttt{[emim]Br / bmim} & \texttt{1-ethyl-3-methylimidazolium bromide} & not matched, same reagent, absent from the synonym table \\
+\texttt{[emim]Br /\allowbreak{} bmim} & \texttt{1-\allowbreak{}ethyl-\allowbreak{}3-\allowbreak{}methylimidazolium bromide} & not matched, same reagent, absent from the synonym table \\
 \bottomrule
 \end{tabularx}
-\end{center}
+\endgroup
+\par\medskip
 The measured F1 of 0.364 is therefore a lower bound on semantic extraction quality. A study with a chemical-name resolution service, for example one backed by PubChem or ChemSpider identifiers, would report higher numbers for identical extractions. This limits comparability with published figures obtained under different matching regimes.
 
 \section{One normalisation change was made after seeing the data}
 
-\texttt{normalize\_chemical} was extended to resolve "full name (ABBREV)" through either half after inspection of failures revealed the pattern. This is disclosed rather than folded in silently. The change raised every extractor by between 0.006 and 0.027, including the rule baseline, and both sets of numbers are preserved in the repository history. A uniform lift across all systems is consistent with a genuine surface-form fix rather than tuning toward a target, but the reader should know the change was made in response to the data.
+\texttt{normalize\_\allowbreak{}chemical} was extended to resolve "full name (ABBREV)" through either half after inspection of failures revealed the pattern. This is disclosed rather than folded in silently. The change raised every extractor by between 0.006 and 0.027, including the rule baseline, and both sets of numbers are preserved in the repository history. A uniform lift across all systems is consistent with a genuine surface-form fix rather than tuning toward a target, but the reader should know the change was made in response to the data.
 
 \section{The gold standard is small, and smaller than planned}
 

@@ -1,6 +1,6 @@
 # 4. Implementation
 
-The system is roughly 7,100 lines of Python across twenty modules, covered by 199 tests. This
+The system is roughly 7,500 lines of Python across twenty-one modules, covered by 216 tests. This
 chapter describes the parts whose design was load bearing, and states the reasoning where a
 different choice was available. Implementation detail that follows obviously from Chapter 3 is
 omitted.
@@ -21,11 +21,18 @@ ones before it, intermediate state can be inspected with ordinary command-line t
 result looks wrong, and a stage that crashes leaves everything before it intact. During
 development every one of those properties was used.
 
+![The extraction pipeline, stage by stage](figures/pipeline_architecture.png)
+
+**Figure 3.** The same pipeline as the block above, drawn in full. Every arrow leaving a stage
+writes a file and every arrow entering one reads a file, so the alternation between the two
+columns is the disk boundary described here. The rule-based and language-model strands sit
+inside a single stage because they implement one interface.
+
 | Package | Responsibility | Lines |
 |---|---|---|
 | `src/ingestion` | Europe PMC access, JATS parsing, passage segmentation | 980 |
 | `src/extraction` | Extractor interface, rule baseline, language models, response cache | 2,221 |
-| `src/evaluation` | Per-field metrics, evaluation runner, figures | 1,764 |
+| `src/evaluation` | Per-field metrics, evaluation runner, reference-database join, figures | 2,196 |
 | `src/kg` | Neo4j schema, provenance-writing loader, named research queries | 462 |
 | `src/annotation` | Gold standard annotation tool | 1,169 |
 | `src/normalize.py` | Shared chemical-name normalisation | 180 |
@@ -157,8 +164,8 @@ is transcribed by hand and none can drift from the table beside it.
 
 Python is pinned to 3.11 (a spaCy dependency has no 3.13 wheels). Neo4j runs from
 `docker-compose.yml`, so the database is a declared version rather than a local installation.
-Every commit passes `ruff`, `ruff format`, `mypy` on all source files, and 199 tests. Coverage
-is 73 percent, concentrated on the modules where a silent error would corrupt a result: the
+Every commit passes `ruff`, `ruff format`, `mypy` on all source files, and 216 tests. Coverage
+is 71 percent, concentrated on the modules where a silent error would corrupt a result: the
 normaliser, the metrics and the extractors.
 
 The whole study is reproducible from a clean checkout with the commands in the repository

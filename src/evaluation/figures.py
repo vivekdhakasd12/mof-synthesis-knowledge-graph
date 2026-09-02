@@ -31,12 +31,21 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[2]
 EVAL = REPO / "data" / "processed" / "evaluation.json"
+PASSAGES = REPO / "data" / "processed" / "passages.jsonl"
+CORPUS = REPO / "data" / "processed" / "corpus.jsonl"
+GOLD = REPO / "data" / "annotations" / "gold.jsonl"
+THRESHOLD = 0.45  # the chosen synthesis-score cutoff, as declared in Section 3.3
 OUT = REPO / "docs" / "report" / "figures"
 
 # Validated order: worst adjacent CVD separation Delta E 11.0 (deutan). Do not reorder
 # without re-running scripts/validate_palette.js from the dataviz skill.
 PALETTE = ["#0072B2", "#D55E00", "#009E73", "#E69F00", "#CC79A7"]
 INK, MUTED, GRID = "#1a1a1a", "#555555", "#d8d8d8"
+
+# One canvas width per figure class, matching the placement widths in the report builder, so
+# no figure is rescaled on the page and label sizes are comparable from one figure to the
+# next. Only the canvas changes: every axis limit, baseline and annotation is untouched.
+STD_W, WIDE_W = 5.1, 6.55
 
 # Model family -> (colour, marker, hatch). The marker and hatch are the greyscale fallback.
 FAMILY = {
@@ -92,6 +101,41 @@ def load() -> dict:
     return json.loads(EVAL.read_text(encoding="utf-8"))
 
 
+def _passages() -> list[dict]:
+    return [json.loads(line) for line in PASSAGES.read_text(encoding="utf-8").splitlines()]
+
+
+def corpus_funnel() -> list[int]:
+    """The five funnel stages, counted from the artefacts rather than typed in.
+
+    Every one of these numbers also appears in the report's prose, so deriving them means a
+    rebuilt corpus cannot leave the figure disagreeing with the text.
+    """
+    rows = _passages()
+    flagged = [r for r in rows if r["synthesis_score"] >= THRESHOLD]
+    papers = sum(1 for _ in CORPUS.open(encoding="utf-8"))
+    gold = sum(1 for _ in GOLD.open(encoding="utf-8"))
+    return [papers, len({r["paper_id"] for r in flagged}), len(rows), len(flagged), gold]
+
+
+CUTOFFS = (0.25, 0.35, 0.45, 0.55, 0.65)
+
+
+def threshold_curve(cutoffs: tuple[float, ...] = CUTOFFS) -> list[tuple[float, int, int]]:
+    """Passages and papers retained at each candidate cutoff.
+
+    Previously a hardcoded list of literals in main(). The values were correct, but a
+    typed-in number in an analysis script is the same shape as the defect recorded in
+    docs/report/README.md, so it is computed now.
+    """
+    rows = _passages()
+    out = []
+    for c in cutoffs:
+        sel = [r for r in rows if r["synthesis_score"] >= c]
+        out.append((c, len(sel), len({r["paper_id"] for r in sel})))
+    return out
+
+
 def fig_cost_vs_f1(data: dict) -> Path:
     """Cost against accuracy. The figure exists to make one finding immediately visible.
 
@@ -100,7 +144,7 @@ def fig_cost_vs_f1(data: dict) -> Path:
     table that is a number to be noticed; on two axes it is the shape of the data.
     """
     _style()
-    fig, ax = plt.subplots(figsize=(6.4, 4.2))
+    fig, ax = plt.subplots(figsize=(STD_W, 3.4))
     ax.grid(True, axis="both", linewidth=0.6, alpha=0.7)
     ax.set_axisbelow(True)
 
@@ -188,7 +232,7 @@ def fig_per_field(data: dict) -> Path:
         ("llm:qwen/qwen3.8-27b:zero_shot", "qwen3.8-27b zero-shot"),
         ("rule_based_v1", "rule baseline"),
     ]
-    fig, ax = plt.subplots(figsize=(7.0, 4.0))
+    fig, ax = plt.subplots(figsize=(STD_W, 3.3))
     ax.grid(True, axis="y", linewidth=0.6, alpha=0.7)
     ax.set_axisbelow(True)
 
@@ -245,7 +289,7 @@ def fig_strategies(data: dict) -> Path:
     _style()
     strategies = ["zero_shot", "few_shot", "schema_guided", "cot"]
     models = [("gpt-4o-mini", PALETTE[0], "///"), ("gpt-4o", PALETTE[1], "\\\\\\")]
-    fig, ax = plt.subplots(figsize=(6.2, 3.8))
+    fig, ax = plt.subplots(figsize=(STD_W, 2.9))
     ax.grid(True, axis="y", linewidth=0.6, alpha=0.7)
     ax.set_axisbelow(True)
 
@@ -310,7 +354,7 @@ def fig_precision_recall(data: dict) -> Path:
     the more actionable observation for anyone tuning one.
     """
     _style()
-    fig, ax = plt.subplots(figsize=(5.6, 4.6))
+    fig, ax = plt.subplots(figsize=(STD_W, 3.6))
     ax.grid(True, linewidth=0.6, alpha=0.7)
     ax.set_axisbelow(True)
 
@@ -385,7 +429,7 @@ def fig_corpus(threshold_rows: list[tuple[float, int, int]]) -> Path:
     are two panels sharing an x-axis.
     """
     _style()
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.2, 3.4))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(WIDE_W, 2.9))
 
     stages = [
         "Papers\ncollected",
@@ -394,7 +438,7 @@ def fig_corpus(threshold_rows: list[tuple[float, int, int]]) -> Path:
         "Synthesis\npassages",
         "Gold\nannotated",
     ]
-    values = [399, 224, 22086, 794, 100]
+    values = corpus_funnel()
     bars = ax1.bar(
         range(len(stages)),
         values,
@@ -489,7 +533,7 @@ def fig_baseline_failure(data: dict) -> Path:
     colours = [PALETTE[2], PALETTE[1], PALETTE[3], PALETTE[4]]
     hatches = ["...", "\\\\\\", "xxx", "///"]
 
-    fig, ax = plt.subplots(figsize=(6.6, 3.0))
+    fig, ax = plt.subplots(figsize=(WIDE_W, 2.5))
     ax.grid(True, axis="x", linewidth=0.6, alpha=0.7)
     ax.set_axisbelow(True)
     ys = range(len(causes))
@@ -538,13 +582,7 @@ def fig_baseline_failure(data: dict) -> Path:
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     data = load()
-    threshold_rows = [
-        (0.25, 2369, 325),
-        (0.35, 1369, 267),
-        (0.45, 794, 224),
-        (0.55, 485, 190),
-        (0.65, 268, 149),
-    ]
+    threshold_rows = threshold_curve()
     for fn in (
         fig_cost_vs_f1,
         fig_per_field,
