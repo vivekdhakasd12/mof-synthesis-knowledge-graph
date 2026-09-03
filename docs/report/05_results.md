@@ -138,8 +138,9 @@ model.
 **The cheaper commercial model outperforms the more expensive one.** gpt-4o-mini beats
 gpt-4o on three of four prompting strategies. The strongest configuration overall costs
 0.028 USD; the most expensive configuration, gpt-4o few-shot, costs 1.289 USD and scores
-lower, a 47-fold cost difference in favour of the weaker model. Chapter 6 discusses the
-likely mechanism.
+lower, a 47-fold cost difference in favour of the weaker model. The difference is a recall
+gap: gpt-4o emits fewer triples than gpt-4o-mini in every strategy and recovers fewer of the
+gold triples, at near-identical precision. Section 6.2 sets out the counts.
 
 ## 5.5 Knowledge graph (RQ5)
 

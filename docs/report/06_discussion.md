@@ -40,41 +40,74 @@ fields that need inference.
 
 ## 6.2 Why the cheaper model outperformed the more expensive one
 
-This is the finding I am least able to fully explain, and also the one I think matters most
-practically. gpt-4o-mini beat gpt-4o on three of the four prompting strategies, at roughly a
-forty-seven-fold difference in cost. Before I try to explain it, two things about how I
-measured it matter.
+This is the finding I think matters most practically, and it is also the one where my first
+explanation turned out to be wrong. gpt-4o-mini beat gpt-4o on three of the four prompting
+strategies, at roughly a forty-seven-fold difference in cost. I want to record what I
+originally proposed, why I tested it, and what the data actually says, because the second
+answer is more useful than the first one would have been.
 
-First, F1 against a fixed gold standard punishes a missed triple and a wrong triple the same
-way. A model that reports more candidate triples per passage does not automatically gain
-recall from that, and it will lose precision if a meaningful share of those extra triples are
-wrong. Second, looking at the per-field breakdown in Section 5.3, gpt-4o-mini's advantage
-sits mostly in USES_PRECURSOR and USES_LINKER, which happen to be the two fields with the
-most gold support (39 and 30 triples) and the two where the rule baseline already trailed the
-most. That is exactly where the two commercial models had the most room in the data to be
-told apart.
+**What I first proposed.** My initial reading was that gpt-4o produces more elaborate output:
+that it surfaces more candidate entities per passage, including plausible ones that were not
+part of the specific synthesis being described, and that against a strict matcher this
+verbosity converts into false positives rather than extra correct answers. It is a tidy story
+and it fits the general intuition that a larger model says more.
 
-My best guess, and I want to be clear it is a guess rather than something I have verified, is
-that gpt-4o's answers are simply more elaborate. It seems to surface more candidate entities
-per passage, including plausible-sounding ones that were not actually part of the specific
-synthesis being described, a reagent mentioned in passing rather than one used in the recipe.
-Against a strict matcher and a gold standard of only 138 triples, that kind of verbosity turns
-into false positives rather than extra correct answers. That story is consistent with the
-precision figures in Section 5.2, where gpt-4o's precision is not obviously better than
-gpt-4o-mini's despite doing better on most general benchmarks, but consistency is not the same
-as confirmation. I have listed a manual error review, actually reading the false positives
-from both models side by side, as the next concrete step in Chapter 8, because that is the
-only way I can think of to test this properly rather than just gesture at it. Until that is
-done, the honest claim is the narrower one already in Chapter 5: the cheaper model wins on
-this evaluation at this cost, and the reason why is a hypothesis, not a result.
+**How I tested it.** The prediction that story makes is checkable without spending anything,
+because every model's output is already saved in `data/processed/results_gold.jsonl`. If
+gpt-4o were the verbose one, it should emit more triples per passage than gpt-4o-mini, and
+its extra output should show up as false positives. Counting the triples each configuration
+emitted over the 100 gold passages:
 
-There is a plainer possible explanation too, and I do not want to quietly favour the more
-interesting story over it. gpt-4o-mini might just be better suited to a concise,
-schema-constrained extraction task, independent of any verbosity effect at all. Either way,
-the practical takeaway is the same. Whatever a model's reputation on general benchmarks, it
-did not predict how it would do on this specific task, and if this study had only tested the
-larger flagship model of each vendor, on the assumption that bigger is safer, it would have
-reached the wrong conclusion for no better reason than not having checked.
+| Strategy | Emitted | TP | FP | FN | Precision | Recall |
+|---|---|---|---|---|---|---|
+| gpt-4o-mini zero-shot | 189 | 47 | 142 | 91 | 0.249 | 0.341 |
+| gpt-4o zero-shot | 129 | 33 | 96 | 105 | 0.256 | 0.239 |
+| gpt-4o-mini few-shot | 231 | 46 | 185 | 92 | 0.199 | 0.333 |
+| gpt-4o few-shot | 164 | 37 | 127 | 101 | 0.226 | 0.268 |
+| gpt-4o-mini schema-guided | 197 | 61 | 136 | 77 | 0.310 | 0.442 |
+| gpt-4o schema-guided | 159 | 39 | 120 | 99 | 0.245 | 0.283 |
+| gpt-4o-mini chain-of-thought | 144 | 39 | 105 | 99 | 0.271 | 0.283 |
+| gpt-4o chain-of-thought | 135 | 38 | 97 | 100 | 0.281 | 0.275 |
+
+**The story is wrong, and it is wrong in the opposite direction.** gpt-4o emits *fewer*
+triples than gpt-4o-mini in every one of the four strategies, by 32 percent on zero-shot,
+29 on few-shot, 19 on schema-guided and 6 on chain-of-thought. It also produces fewer false
+positives in absolute terms, which is the reverse of what
+my explanation required. Precision is close to identical between the two models: gpt-4o is
+marginally ahead on three strategies and clearly behind on the fourth, and no strategy shows
+the precision collapse that a verbosity effect would produce.
+
+**What the numbers actually show is a recall gap.** gpt-4o has fewer true positives and more
+false negatives in every strategy. Its worst case is schema-guided, where it recovers 39 of
+the 138 gold triples against gpt-4o-mini's 61. The larger model is the more conservative
+reader: it commits to fewer facts per passage, and on this task the facts it declines to
+extract are disproportionately ones the gold standard contains.
+
+That reframes the practical lesson. The cost of caution is asymmetric here. A synthesis
+paragraph is dense with recoverable facts, the gold standard is dense to match, and an
+extractor that holds back pays in recall immediately while buying almost no precision in
+return. On this task, and probably on extraction tasks generally, a model that reaches and is
+sometimes wrong beats a model that abstains and is occasionally right.
+
+One further pattern is worth noting without leaning on it. The two models are closest on
+chain-of-thought, 39 true positives against 38, and that is the single strategy where gpt-4o
+wins on F1. Chain-of-thought is also the strategy that most explicitly asks a model to work
+through a passage step by step. It is consistent with the idea that gpt-4o's under-extraction
+is a disposition that prompting can partly correct, but one strategy and a one-point
+difference cannot establish that, and I am not claiming it.
+
+**What this does not explain.** I now know what gpt-4o does differently, that it extracts
+less, but not why it declines. Reading the individual passages where gpt-4o-mini found a
+gold triple and gpt-4o did not would answer that, and it is the natural continuation of the
+review this section began. I also want to be careful not to over-generalise from a single
+run of each configuration on a 138-triple gold standard; Section 7.8 states that limitation
+and it applies here.
+
+What I would keep from this whole exercise is procedural rather than about models. The
+verbosity explanation sounded right, matched a common intuition, and was consistent with the
+F1 column I first looked at. It survived until I counted something it predicted. Chapter 8
+lists this review as future work because that was true when I wrote it; the counting half is
+now done, and it changed the answer.
 
 ## 6.3 What the 15 percent MOF-identification rate means for rule-based pipeline maintainers
 

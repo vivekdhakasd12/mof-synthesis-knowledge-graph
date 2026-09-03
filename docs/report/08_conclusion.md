@@ -18,10 +18,14 @@ precursors and +0.31 on organic linkers, falling to +0.25 on solvents and +0.17 
 conditions, which are the fields local surface patterns already handle.
 
 **The cheaper commercial model outperformed the more expensive one** on three of four
-prompting strategies, at a 47-fold cost difference in favour of the cheaper model. The most
-likely mechanism, that a larger model produces more elaborate output and therefore more false
-positives against a fixed gold standard, is consistent with the precision figures but is not
-established here.
+prompting strategies, at a 47-fold cost difference in favour of the cheaper model. The
+mechanism is a recall gap rather than a precision one. gpt-4o emits fewer triples than
+gpt-4o-mini in every strategy, by 6 to 32 percent depending on the prompt, recovers fewer of
+the gold triples, and
+gains almost nothing in precision for the caution. The larger model is the more conservative
+reader, and on a task whose passages are dense with recoverable facts, holding back costs more
+than reaching does. An earlier reading of this result proposed the opposite, that the larger
+model over-extracted; Section 6.2 records that explanation and the count that refuted it.
 
 **Schema-guided prompting was the best single choice observed**, though not universally, and
 few-shot prompting was the weakest strategy on both commercial models despite the most
@@ -63,5 +67,7 @@ close.
    as extraction error.
 5. **Enlarge the gold standard and add a second annotator**, which would both narrow the
    confidence intervals and allow an inter-annotator agreement statistic.
-6. **Investigate the cheap-model result** with a manual error review, since it is the most
-   practically consequential finding here and currently rests on an unverified mechanism.
+6. **Finish the error review of the cheap-model result.** Section 6.2 establishes *what*
+   gpt-4o does differently, that it extracts less, by counting emitted triples. What remains
+   is *why* it declines: reading the individual passages where gpt-4o-mini recovered a gold
+   triple and gpt-4o did not.
