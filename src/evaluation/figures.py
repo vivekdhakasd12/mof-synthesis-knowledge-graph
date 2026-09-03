@@ -42,10 +42,10 @@ OUT = REPO / "docs" / "report" / "figures"
 PALETTE = ["#0072B2", "#D55E00", "#009E73", "#E69F00", "#CC79A7"]
 INK, MUTED, GRID = "#1a1a1a", "#555555", "#d8d8d8"
 
-# One canvas width per figure class, matching the placement widths in the report builder, so
-# no figure is rescaled on the page and label sizes are comparable from one figure to the
-# next. Only the canvas changes: every axis limit, baseline and annotation is untouched.
-STD_W, WIDE_W = 5.1, 6.55
+# One canvas width for every figure, matching the report's 15cm text measure (5.9in), so no
+# figure is rescaled on placement and label sizes are comparable from one figure to the next.
+# Only the canvas changes: every axis limit, baseline and annotation is untouched.
+STD_W = WIDE_W = 5.9
 
 # Model family -> (colour, marker, hatch). The marker and hatch are the greyscale fallback.
 FAMILY = {

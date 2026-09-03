@@ -5,8 +5,8 @@
 % it is a named column that the wide figures are set into, not slack.
 \geometry{
   a4paper,
-  top=2.7cm, bottom=2.9cm, left=3.4cm, right=4.6cm,
-  marginparwidth=3.2cm, marginparsep=0.5cm,
+  top=2.7cm, bottom=2.9cm, left=3.2cm, right=2.8cm,
+  marginparwidth=2.0cm, marginparsep=0.4cm,
   headsep=0.7cm, footskip=1.2cm
 }
 \usepackage{booktabs}
@@ -110,7 +110,7 @@
 \begin{titlepage}
 \thispagestyle{empty}
 \centering
-\includegraphics[width=4.2cm]{../assets/srh_logo.png}
+\includegraphics[width=4.2cm]{../assets/srh_logo.jpg}
 \vspace{1.6cm}
 
 {\color{srhorange}\rule{\linewidth}{1.2pt}}
@@ -263,7 +263,7 @@ The extraction target is defined by a MOF-specific ontology (v0.2) held in \text
 \par\medskip
 \begingroup
 \small\setlength{\tabcolsep}{6pt}
-\begin{tabular}{@{}lrr@{}}
+\begin{tabular}{@{}lll@{}}
 \toprule
 \textbf{Relation} & \textbf{From} & \textbf{To} \\
 \midrule
@@ -284,7 +284,8 @@ Two design decisions in this table matter later. Solvents and conditions attach 
 
 
 \begin{figure}[H]
-\noindent\makebox[\linewidth][l]{\includegraphics[width=\dimexpr\linewidth+\marginparsep+\marginparwidth\relax]{figures/ontology_schema.pdf}}
+\centering
+\includegraphics[width=\linewidth]{figures/ontology_schema.pdf}
 \caption{The ontology as held in \texttt{configs/\allowbreak{}ontology.\allowbreak{}json}. Solvent and Condition are reachable only through SynthesisMethod, which is why the object of those two relations rather than the subject carries the substantive claim. MENTIONED\_IN is drawn dashed and outside the flow because the pipeline attaches it from passage metadata, so it is never produced by an extractor.}
 \label{fig:ontology_schema}
 \end{figure}
@@ -316,7 +317,7 @@ The threshold is a declared choice, not an accident. Its sensitivity is:
 \par\medskip
 \begingroup
 \small\setlength{\tabcolsep}{6pt}
-\begin{tabular}{@{}lrr@{}}
+\begin{tabular}{@{}lll@{}}
 \toprule
 \textbf{Cutoff} & \textbf{Passages} & \textbf{Papers} \\
 \midrule
@@ -331,7 +332,8 @@ The threshold is a declared choice, not an accident. Its sensitivity is:
 \par\medskip
 
 \begin{figure}[H]
-\noindent\makebox[\linewidth][l]{\includegraphics[width=\dimexpr\linewidth+\marginparsep+\marginparwidth\relax]{figures/fig5_corpus_and_threshold.pdf}}
+\centering
+\includegraphics[width=\linewidth]{figures/fig5_corpus_and_threshold.pdf}
 \caption{Left, the corpus funnel from collection to the gold standard, on a log scale because each stage is roughly an order of magnitude smaller than the last. Right, the same threshold sensitivity as the table, shown as a curve so the chosen cutoff of 0.45 can be seen sitting on the shoulder of the curve rather than at an arbitrary point on a steep slope.}
 \label{fig:fig5_corpus_and_threshold}
 \end{figure}
@@ -351,7 +353,7 @@ The sample size was reduced from the 150 to 200 stated in the exposé, on 2026-0
 \par\medskip
 \begingroup
 \small\setlength{\tabcolsep}{6pt}
-\begin{tabularx}{\linewidth}{@{}Lr@{}}
+\begin{tabular}{@{}lr@{}}
 \toprule
 \textbf{Relation} & \textbf{Support} \\
 \midrule
@@ -362,7 +364,7 @@ USES\_LINKER & 30 \\
 SYNTHESIZED\_BY & 1 \\
 HAS\_PROPERTY, MEASURED\_AT, USED\_IN & 0 \\
 \bottomrule
-\end{tabularx}
+\end{tabular}
 \endgroup
 \par\medskip
 Only the first four relations carry enough support to support a conclusion. The scarcity of the others is itself a finding about where information sits in a paper: properties and applications are rarely stated inside a synthesis paragraph.
@@ -405,7 +407,8 @@ Stages communicate through JSON Lines on disk rather than in-process objects. Th
 
 
 \begin{figure}[H]
-\noindent\makebox[\linewidth][l]{\includegraphics[width=\dimexpr\linewidth+\marginparsep+\marginparwidth\relax]{figures/pipeline_architecture.pdf}}
+\centering
+\includegraphics[width=\linewidth]{figures/pipeline_architecture.pdf}
 \caption{The same pipeline as the block above, drawn in full. Every arrow leaving a stage writes a file and every arrow entering one reads a file, so the alternation between the two columns is the disk boundary described here. The rule-based and language-model strands sit inside a single stage because they implement one interface.}
 \label{fig:pipeline_architecture}
 \end{figure}
@@ -413,7 +416,7 @@ Stages communicate through JSON Lines on disk rather than in-process objects. Th
 \par\medskip
 \begingroup
 \small\setlength{\tabcolsep}{6pt}
-\begin{tabularx}{\linewidth}{@{}LLr@{}}
+\begin{tabularx}{\linewidth}{@{}lLr@{}}
 \toprule
 \textbf{Package} & \textbf{Responsibility} & \textbf{Lines} \\
 \midrule
@@ -511,7 +514,7 @@ Measured, comparing the best language-model configuration with the rule baseline
 \par\medskip
 \begingroup
 \small\setlength{\tabcolsep}{6pt}
-\begin{tabularx}{\linewidth}{@{}lRRrL@{}}
+\begin{tabular}{@{}lrrrl@{}}
 \toprule
 \textbf{Field} & \textbf{Rule baseline F1} & \textbf{Best LLM F1} & \textbf{Margin} & \textbf{Predicted rank} \\
 \midrule
@@ -520,7 +523,7 @@ USES\_LINKER & 0.26 & 0.57 & +0.31 & large, confirmed \\
 IN\_SOLVENT & 0.23 & 0.48 & +0.25 & smaller, confirmed \\
 AT\_CONDITION & 0.00 & 0.17 & +0.17 & smallest, confirmed \\
 \bottomrule
-\end{tabularx}
+\end{tabular}
 \endgroup
 \par\medskip
 The ordering matches the prediction exactly. Because the prediction was committed to the repository before the models were run, this is a confirmation rather than a pattern identified after the fact.
@@ -532,7 +535,7 @@ Relaxed matching, micro-averaged over all scored relations:
 \par\medskip
 \begingroup
 \small\setlength{\tabcolsep}{6pt}
-\begin{tabularx}{\linewidth}{@{}LrrrrR@{}}
+\begin{tabularx}{\linewidth}{@{}Lrrlrr@{}}
 \toprule
 \textbf{Extractor} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{Cost (USD)} & \textbf{Mean latency} \\
 \midrule
@@ -608,14 +611,14 @@ Excluding AT\_CONDITION, whose behaviour is explained in Section 5.5, the best c
 \par\medskip
 \begingroup
 \small\setlength{\tabcolsep}{6pt}
-\begin{tabularx}{\linewidth}{@{}lrrRR@{}}
+\begin{tabular}{@{}lrrll@{}}
 \toprule
 \textbf{Model} & \textbf{zero-shot} & \textbf{few-shot} & \textbf{schema-guided} & \textbf{chain-of-thought} \\
 \midrule
 gpt-4o-mini & 0.287 & 0.249 & \textbf{0.364} & 0.277 \\
 gpt-4o & 0.247 & 0.245 & 0.263 & \textbf{0.278} \\
 \bottomrule
-\end{tabularx}
+\end{tabular}
 \endgroup
 \par\medskip
 Schema-guided prompting wins clearly on the stronger configuration, supporting the premise that constraining output to the ontology helps. It does not win universally: on gpt-4o, chain-of-thought leads by 0.015, a margin a 138-triple gold standard cannot resolve. The defensible claim is that schema-guided is the best single choice observed, not that it dominates.
@@ -635,7 +638,7 @@ Few-shot is the weakest strategy on both models despite having by far the most e
 \par\medskip
 \begingroup
 \small\setlength{\tabcolsep}{6pt}
-\begin{tabularx}{\linewidth}{@{}LrrR@{}}
+\begin{tabular}{@{}lrrr@{}}
 \toprule
 \textbf{Model} & \textbf{F1} & \textbf{Cost (USD)} & \textbf{Mean latency} \\
 \midrule
@@ -644,7 +647,7 @@ gpt-4o (commercial) & 0.247 & 0.447 & 3.2 s \\
 qwen3.8-27b (open weight) & 0.191 & 0.000 & 13.2 s \\
 rule-based baseline & 0.112 & 0.000 & 0.001 s \\
 \bottomrule
-\end{tabularx}
+\end{tabular}
 \endgroup
 \par\medskip
 The ordering is commercial, then open weight, then rules. The open-weight model reaches approximately two thirds of the best commercial F1 at zero marginal cost and roughly four times the latency, the latter being a property of the free serving tier rather than of the model.
@@ -662,7 +665,7 @@ Cross-paper aggregation over synthesis methods:
 \par\medskip
 \begingroup
 \small\setlength{\tabcolsep}{6pt}
-\begin{tabularx}{\linewidth}{@{}Lrr@{}}
+\begin{tabular}{@{}lrr@{}}
 \toprule
 \textbf{Method} & \textbf{Papers} & \textbf{MOFs} \\
 \midrule
@@ -673,7 +676,7 @@ microwave-assisted & 36 & 6 \\
 stirred at room temperature & 35 & 5 \\
 reflux & 21 & 3 \\
 \bottomrule
-\end{tabularx}
+\end{tabular}
 \endgroup
 \par\medskip
 DigiMOF reported more hydrothermal (5,677) than solvothermal (3,672) records and described that ordering as surprising, since solvothermal is the more common laboratory route. This corpus shows the opposite ordering. The difference may reflect corpus composition, an open-access Europe PMC set against a CSD-derived one, or a difference in how each system infers an unnamed route. It is recorded here as an open question rather than resolved.
@@ -697,7 +700,7 @@ Field coverage within that intersection:
 \par\medskip
 \begingroup
 \small\setlength{\tabcolsep}{6pt}
-\begin{tabularx}{\linewidth}{@{}lrL@{}}
+\begin{tabular}{@{}lll@{}}
 \toprule
 \textbf{Field} & \textbf{Source} & \textbf{Coverage} \\
 \midrule
@@ -709,7 +712,7 @@ Metal & DigiMOF & 494/509 (97 percent) \\
 Yield & SynMOF & 374/509 (74 percent) \\
 Linker & DigiMOF & 159/509 (31 percent) \\
 \bottomrule
-\end{tabularx}
+\end{tabular}
 \endgroup
 \par\medskip
 The linker coverage of 31 percent is the notable figure: the field this study cares most about is the one the reference databases are least complete on.
@@ -754,7 +757,8 @@ The rule baseline names a MOF in only 121 of the 794 synthesis passages in the f
 
 
 \begin{figure}[H]
-\noindent\makebox[\linewidth][l]{\includegraphics[width=\dimexpr\linewidth+\marginparsep+\marginparwidth\relax]{figures/fig6_baseline_failure_modes.pdf}}
+\centering
+\includegraphics[width=\linewidth]{figures/fig6_baseline_failure_modes.pdf}
 \caption{The rule baseline's dominant failure is not a missing dictionary entry. Coreference across a paper and generic numbered designations together account for more than four times as many passages as successful MOF identification.}
 \label{fig:fig6_baseline_failure_modes}
 \end{figure}

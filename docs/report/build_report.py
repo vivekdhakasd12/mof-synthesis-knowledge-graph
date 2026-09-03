@@ -14,16 +14,18 @@ reader does not need a full TeX Live installation to rebuild the document.
 
 Typographic decisions taken here, and why, since they are otherwise invisible:
 
-*The measure is 13 cm, not 16 cm.* At 11pt the old text block ran about 95 characters to
-the line, roughly three and a half alphabet lengths against a comfortable two to three. The
-recovered space is not padding: it becomes a named outer column, ``marginparwidth``, that
-the wide figures bleed into, so the two-panel charts and the two structural diagrams get
-16.7 cm while the prose keeps a readable line.
+*The measure is 15 cm.* At 11pt that is roughly 85 characters to the line. A previous
+revision cut it to 13 cm and reserved the recovered 3.2 cm as an outer column for four
+figures to bleed into. That trade was wrong for this document: its prose is full of long
+unbreakable identifiers (USES_PRECURSOR, AT_CONDITION), inline code, and six-column numeric
+tables, none of which fit a 13 cm measure. The tables in 5.1 and 5.2 wrapped their headers
+onto two lines and read as broken. The column bought four figures an overhang and cost every
+table its width, so it is gone.
 
-*Figures are placed at the width they were generated at.* Every figure is produced by a
-Python module at either the measure or the measure plus the margin column, so nothing is
-rescaled on placement and the label sizes in one figure match the label sizes in the next.
-``WIDE_FIGURES`` records which stems are the wide class.
+*Figures are set at the measure.* All of them, so figures and prose share both edges. A
+figure wider than the text it explains reads as misalignment, not emphasis. The generator in
+``src/evaluation/figures.py`` produces one canvas width matching this measure, so nothing is
+rescaled on placement and label sizes are comparable from one figure to the next.
 
 *Tables can now be numbered.* A table followed by a paragraph beginning ``**Table N.**`` is
 emitted as a numbered float with that caption, exactly mirroring the figure convention, so
@@ -82,13 +84,6 @@ SUBMITTED = "September 2026"
 
 # Figures generated at the measure plus the outer margin column rather than at the measure.
 # These are the ones with two panels or a wide aspect, where 13 cm crushes the labels.
-WIDE_FIGURES = {
-    "fig5_corpus_and_threshold",
-    "fig6_baseline_failure_modes",
-    "pipeline_architecture",
-    "ontology_schema",
-}
-WIDE_LEN = r"\dimexpr\linewidth+\marginparsep+\marginparwidth\relax"
 
 # Latin Modern, the default, has no glyph for the Unicode subscript block, so a bare
 # "Cu\u2083(BTC)\u2082" silently loses its digits. Mapping them onto \textsubscript keeps
@@ -122,6 +117,9 @@ TEX_ESCAPES = [
 
 # A caption in the markdown reads "**Figure 4.** Precision against recall...". LaTeX
 # numbers figures itself, so the manual number is stripped to avoid "Figure 4: Figure 4."
+# A column is numeric when every body cell is one, which keeps figures right-aligned and
+# text left-aligned without needing a per-table decision.
+_NUMERIC = re.compile(r"[+-]?[\d.,]+\s*(?:%|s|h|USD)?|n/a|-|")
 FIG_PREFIX = re.compile(r"^\s*Figure\s+\d+\.\s*")
 TAB_PREFIX = re.compile(r"^\s*Table\s+\d+\.\s*")
 HEADING_NUMBER = re.compile(r"^\s*\d+(?:\.\d+)*\.?\s+")
@@ -182,29 +180,22 @@ def inline(nodes: list[dict[str, Any]]) -> str:
 def figure(url: str, caption: str) -> str:
     """A float carrying the figure, preferring the vector version for print.
 
-    A stem in WIDE_FIGURES is set across the measure plus the outer margin column and
-    left-aligned in a \\makebox, so it bleeds into that margin rather than being centred
-    and overhanging both sides. Its caption is set to the same width so the two align.
+    Every figure is set at the text measure, so figures and prose share both edges. An
+    earlier revision let four of them bleed into a reserved outer column; that column cost
+    3.2cm of measure which the long identifiers and numeric tables in this document needed
+    more than the figures needed the overhang, and a figure wider than the text it explains
+    reads as misalignment rather than emphasis.
     """
     path = (REPORT / url).resolve()
     vector = path.with_suffix(".pdf")
     if vector.is_file():
         path = vector
     rel = path.relative_to(REPORT).as_posix()
-    stem = Path(url).stem
-    label = "fig:" + stem
-    wide = stem in WIDE_FIGURES
-    width = WIDE_LEN if wide else r"\linewidth"
-    graphic = f"\\includegraphics[width={width}]{{{rel}}}"
-    if wide:
-        # The graphic bleeds into the outer column, but the caption keeps the prose
-        # measure. Widening the caption to match made LaTeX centre a box wider than the
-        # text block, overhanging both margins by half the overhang each.
-        body = f"\\noindent\\makebox[\\linewidth][l]{{{graphic}}}\n"
-    else:
-        body = f"\\centering\n{graphic}\n"
+    label = "fig:" + Path(url).stem
     return (
-        "\\begin{figure}[H]\n" + body + f"\\caption{{{caption}}}\n\\label{{{label}}}\n"
+        "\\begin{figure}[H]\n\\centering\n"
+        f"\\includegraphics[width=\\linewidth]{{{rel}}}\n"
+        f"\\caption{{{caption}}}\n\\label{{{label}}}\n"
         "\\end{figure}\n"
     )
 
@@ -229,22 +220,36 @@ def tabular(node: dict[str, Any]) -> str:
             for row in section["children"]:
                 body.append([inline(c["children"]) for c in row["children"]])
 
-    widths = [max((len(r[i]) for r in body), default=0) for i in range(len(head))]
-    # The header is measured too. A narrow numeric column under a long header ("Rule
-    # baseline F1" over "0.13") cannot wrap if it is set as `r`, and silently pushes the
-    # table past the measure; as `R` the header wraps and the numbers stay right-aligned.
-    heads = [len(h) for h in head]
+    # Column types are chosen by estimating whether the table fits the measure, not by a
+    # per-column length rule. The eager rule that preceded this wrapped any column whose
+    # header ran past ten characters, so "Rule baseline F1" broke over two lines above a
+    # column of four-character numbers even where the table had room to spare. Wrapping is
+    # now a last resort: flush columns first, then convert the widest column to a wrapping
+    # one, and only while the estimate still overflows.
+    natural = [max([len(head[i])] + [len(r[i]) for r in body]) for i in range(len(head))]
+    numeric = [
+        bool(body) and all(_NUMERIC.fullmatch(r[i].strip()) for r in body) for i in range(len(head))
+    ]
 
-    def column(i: int, body_w: int, head_w: int) -> str:
-        if body_w > 18:
-            return "L"
-        if head_w > 10:
-            return "L" if i == 0 else "R"
-        return "l" if i == 0 else "r"
+    # \small in an 11pt document is 10pt, where digits and lowercase average about half an em.
+    char_pt, measure_pt, colsep_pt, min_wrap_ch = 5.5, 426.0, 12.0, 12
 
-    spec = "".join(column(i, w, heads[i]) for i, w in enumerate(widths))
-    if not set("LR") & set(spec):  # tabularx needs a stretchable column to distribute
-        spec = "l" + spec[1:]
+    def fits(wrapping: set[int]) -> bool:
+        est = sum(
+            (min_wrap_ch if k in wrapping else natural[k]) * char_pt for k in range(len(head))
+        )
+        return est + colsep_pt * (len(head) - 1) <= measure_pt
+
+    wrapping: set[int] = set()
+    while not fits(wrapping) and len(wrapping) < len(head):
+        widest = max((k for k in range(len(head)) if k not in wrapping), key=lambda k: natural[k])
+        wrapping.add(widest)
+
+    spec = "".join(
+        ("R" if numeric[k] else "L") if k in wrapping else ("r" if numeric[k] else "l")
+        for k in range(len(head))
+    )
+    if not set("LR") & set(spec):
         env, arg = "tabular", f"{{@{{}}{spec}@{{}}}}"
     else:
         env, arg = "tabularx", f"{{\\linewidth}}{{@{{}}{spec}@{{}}}}"
@@ -395,8 +400,8 @@ PREAMBLE = r"""\documentclass[11pt,a4paper,oneside]{report}
 % it is a named column that the wide figures are set into, not slack.
 \geometry{
   a4paper,
-  top=2.7cm, bottom=2.9cm, left=3.4cm, right=4.6cm,
-  marginparwidth=3.2cm, marginparsep=0.5cm,
+  top=2.7cm, bottom=2.9cm, left=3.2cm, right=2.8cm,
+  marginparwidth=2.0cm, marginparsep=0.4cm,
   headsep=0.7cm, footskip=1.2cm
 }
 \usepackage{booktabs}
@@ -547,7 +552,7 @@ def build_tex() -> str:
 
     # Tectonic runs with docs/report as its working directory, so the graphic path has to
     # be relative to that, not to the repository root.
-    logo = ASSETS / "srh_logo.png"
+    logo = ASSETS / "srh_logo.jpg"
     fields["logo"] = (
         rf"\includegraphics[width=4.2cm]{{{os.path.relpath(logo, REPORT)}}}"
         if logo.exists()

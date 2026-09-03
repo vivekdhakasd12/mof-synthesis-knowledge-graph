@@ -51,7 +51,7 @@ EXTERNAL_FILL = "#F4F3F1"
 
 # The text block is 13 cm and the outer margin column adds 3.7 cm. Both diagrams are wide
 # figures, placed across the whole measure plus that margin, so they are drawn at 6.55 in.
-WIDE_IN = 6.55
+WIDE_IN = 5.9  # the report's 15cm text measure, so the diagram is never rescaled
 
 DASH = (0, (5, 4))
 DASH_FLOW = (0, (6, 4))
