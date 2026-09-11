@@ -45,6 +45,7 @@ from __future__ import annotations
 import argparse
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -57,6 +58,12 @@ REPO = REPORT.parents[1]
 ASSETS = REPO / "docs" / "assets"
 TEX = REPORT / "report.tex"
 PDF = REPORT / "report.pdf"
+# A second copy under the name the submission is filed as. The build wrote only
+# report.pdf, so a hand-renamed copy silently went stale the next time anything was
+# rebuilt, and the file actually being submitted was an older document than the repo's.
+# Writing both every time removes that gap. This copy is gitignored: the repository
+# tracks report.pdf, and carrying the same bytes twice helps nobody.
+SUBMISSION_PDF = REPORT / "Case Study 2 Knowledge Graph with LLMs_Devendra Singh Dhakad.pdf"
 
 CHAPTERS = [
     ("01_introduction.md", "Introduction"),
@@ -177,6 +184,43 @@ def inline(nodes: list[dict[str, Any]]) -> str:
     return "".join(out)
 
 
+def _balanced(text: str) -> bool:
+    """Whether braces pair up, so a truncation has not cut through \\texttt{...}."""
+    depth = 0
+    for ch in text:
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth < 0:
+                return False
+    return depth == 0
+
+
+SHORT_CAPTION_MAX = 95
+
+
+def short_caption(caption: str) -> str:
+    """A one-line title for the List of Figures, derived from the full caption.
+
+    Takes the first sentence, and shortens further at a comma if that sentence still runs
+    long. Splitting on ". " rather than "." keeps filenames such as ontology.json intact.
+    Any candidate that would leave an unbalanced brace is rejected, because the caption
+    carries LaTeX markup and a cut through \\texttt{...} would not compile.
+    """
+    first = caption.strip().split(". ")[0].rstrip(".").strip()
+    if not _balanced(first):
+        return ""
+    if len(first) <= SHORT_CAPTION_MAX:
+        return first
+    head = first[:SHORT_CAPTION_MAX]
+    if "," in head:
+        trimmed = head[: head.rfind(",")].strip()
+        if _balanced(trimmed):
+            return trimmed
+    return first
+
+
 def figure(url: str, caption: str) -> str:
     """A float carrying the figure, preferring the vector version for print.
 
@@ -192,10 +236,15 @@ def figure(url: str, caption: str) -> str:
         path = vector
     rel = path.relative_to(REPORT).as_posix()
     label = "fig:" + Path(url).stem
+    short = short_caption(caption)
+    # \caption[short]{full}: the optional argument is what the List of Figures prints.
+    # Without it the list repeats each caption in full, four to six lines apiece, and stops
+    # being a thing you can scan.
+    opt = f"[{short}]" if short and short != caption else ""
     return (
         "\\begin{figure}[H]\n\\centering\n"
         f"\\includegraphics[width=\\linewidth]{{{rel}}}\n"
-        f"\\caption{{{caption}}}\n\\label{{{label}}}\n"
+        f"\\caption{opt}{{{caption}}}\n\\label{{{label}}}\n"
         "\\end{figure}\n"
     )
 
@@ -447,10 +496,13 @@ PREAMBLE = r"""\documentclass[11pt,a4paper,oneside]{report}
   pdfsubject={<<module>>, <<university>>}
 ]{hyperref}
 
-% Contents entries without dotted leaders. \@dotsep is a length in mu; setting it absurdly
-% large suppresses the dots without pulling in another package.
+% Dotted leaders in the contents and the list of figures. A previous revision suppressed
+% them for a cleaner look, but at this measure a short entry such as "8.4 Future work"
+% leaves several centimetres of blank between the title and its page number, and the number
+% reads as detached from the line it belongs to. \@dotsep is a length in mu; 4.5 is the
+% class default spacing.
 \makeatletter
-\renewcommand{\@dotsep}{10000}
+\renewcommand{\@dotsep}{4.5}
 \makeatother
 
 \captionsetup{
@@ -618,10 +670,11 @@ def main() -> None:
     print(f"wrote {TEX.relative_to(REPO)}")
     if args.no_pdf:
         return
-    if compile_pdf():
-        print(f"wrote {PDF.relative_to(REPO)}")
-    else:
+    if not compile_pdf():
         sys.exit("tectonic failed")
+    print(f"wrote {PDF.relative_to(REPO)}")
+    shutil.copy2(PDF, SUBMISSION_PDF)
+    print(f"wrote {SUBMISSION_PDF.relative_to(REPO)}")
 
 
 if __name__ == "__main__":

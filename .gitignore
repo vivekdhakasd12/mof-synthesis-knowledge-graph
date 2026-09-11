@@ -71,6 +71,10 @@ llm_cache/
 # The rendered report is a deliverable, not a build artefact: it is what a reader
 # arriving at this repository actually wants to open.
 !docs/report/*.pdf
+# The submission-named copy of the report. Same bytes as docs/report/report.pdf,
+# which is tracked; this one exists so the file being filed is never a stale rename.
+docs/report/Case Study 2*.pdf
+
 # Tectonic's build log, which is regenerated on every compile.
 docs/report/*.log
 
