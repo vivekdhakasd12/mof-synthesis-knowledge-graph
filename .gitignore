@@ -75,6 +75,10 @@ llm_cache/
 # which is tracked; this one exists so the file being filed is never a stale rename.
 docs/report/Case Study 2*.pdf
 
+# Course material circulated by the supervisor. Not this project's work and not ours
+# to redistribute from a public repository.
+docs/ProjectList-*.pdf
+
 # Tectonic's build log, which is regenerated on every compile.
 docs/report/*.log
 
