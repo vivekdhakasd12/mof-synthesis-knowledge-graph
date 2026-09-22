@@ -339,13 +339,13 @@ y = header(s, "7", "Per field, and a pre-registered prediction", 8)
 figure(s, "fig2_per_field_f1.png", Emu(int(y - Inches(0.05))), 3.3, left_in=0.62)
 box(s, Inches(7.55), y, Inches(5.15), Inches(3.25), fill=FAINT)
 text(s, Inches(7.9), Emu(int(y + Inches(0.28))), Inches(4.5), Inches(2.7),
-     [[R("Recorded before any model was run", 13, ORANGE, bold=True)],
-      [R("“The LLM margin over the rule baseline should be largest on "
-         "USES_PRECURSOR and USES_LINKER, and smallest on AT_CONDITION "
-         "and IN_SOLVENT.”", 13.5, INK, italic=True)],
-      [R("Measured margins: +0.42, +0.31, +0.25, +0.17. The ordering matches exactly. "
-         "The prediction was committed to the repository first, so this is a "
-         "confirmation rather than a pattern found afterwards.", 13.5, INK)]],
+     [[R("Committed 23 August, before any results existed", 13, ORANGE, bold=True)],
+      [R("“The LLM margin should be largest on USES_PRECURSOR, USES_LINKER "
+         "and SYNTHESIZED_BY, and smallest on AT_CONDITION and IN_SOLVENT.”",
+         13, INK, italic=True)],
+      [R("SYNTHESIZED_BY has one gold triple, so it cannot be tested. On the four "
+         "fields that can: +0.42, +0.31, +0.25, +0.17. Precursor and linker lead, "
+         "solvent and condition trail, as predicted.", 13, INK)]],
      space_after=9, line_spacing=1.2)
 text(s, Inches(0.62), Inches(6.05), Inches(12.0), Inches(0.5),
      [[R("AT_CONDITION scores measure annotation granularity, not extraction quality, and are "
@@ -369,7 +369,8 @@ bullets(s, Inches(0.62), Inches(4.35), Inches(12.0), [
      "gpt-4o-mini in all four strategies, by 32, 29, 19 and 6 percent.", 0),
     ("The gap is recall, not precision. gpt-4o recovers 39 of 138 gold triples on "
      "schema-guided against gpt-4o-mini's 61, at near-identical precision.", 0),
-    ("On dense synthesis text, caution costs more than it buys.", 0),
+    ("Every prompt says to omit when unsure. Whether gpt-4o is more cautious or simply "
+     "more obedient, this design cannot tell apart.", 0),
 ], size=15, gap=10)
 
 # ===========================================================================
@@ -434,23 +435,51 @@ bullets(s, Inches(0.62), y, Inches(12.0), [
 s = slide()
 y = header(s, "12", "Conclusion", 13)
 bullets(s, Inches(0.62), y, Inches(7.5), [
-    ("Language models beat the rule baseline on every configuration tested, and by the "
-     "largest margin exactly where a pre-registered prediction said they would.", 0),
-    ("The cheaper model won, and the mechanism is under-extraction by the larger model, "
-     "measured rather than assumed.", 0),
-    ("An open-weight model reached about two thirds of the best commercial F1 at zero "
-     "marginal cost.", 0),
+    ("Language models beat the rule baseline on every configuration tested, and the "
+     "testable part of a pre-registered prediction held.", 0),
+    ("The cheaper model won because the larger one extracts less. That is measured; "
+     "why it extracts less is not.", 0),
+    ("On the like-for-like zero-shot comparison, an open-weight model reached about two "
+     "thirds of the commercial F1 at zero marginal cost.", 0),
     ("A provenance-complete knowledge graph, verified by query.", 0),
 ], size=14.5, gap=10)
-box(s, Inches(8.35), y, Inches(4.35), Inches(3.3), fill=None, line=RULE, pt=1.2)
-text(s, Inches(8.68), Emu(int(y + Inches(0.3))), Inches(3.7), Inches(2.8),
+box(s, Inches(8.35), y, Inches(4.35), Inches(3.95), fill=None, line=RULE, pt=1.2)
+text(s, Inches(8.68), Emu(int(y + Inches(0.3))), Inches(3.7), Inches(3.45),
      [[R("Future work", 13, ORANGE, bold=True)],
       [R("Obtain a name-to-refcode mapping and close RQ3.", 13.5, INK)],
-      [R("Finish the error review: why gpt-4o declines to extract.", 13.5, INK)],
+      [R("Rerun without the \u201comit when unsure\u201d instruction, to separate "
+         "caution from obedience.", 13.5, INK)],
       [R("Repair the condition evaluation and add identifier resolution.", 13.5, INK)],
       [R("Enlarge the gold standard and add a second annotator.", 13.5, INK)]],
      space_after=9, line_spacing=1.2)
 
+# ---- speaker notes ---------------------------------------------------------
+# presentation/speaker_script.md is the single source for what is said on each slide. It is
+# attached here, at build time, so the notes in Presenter View can never describe a slide
+# that has since changed: rebuilding the deck re-reads the script.
+SCRIPT = REPO / "presentation" / "speaker_script.md"
+
+
+def load_notes(path: Path) -> dict[int, str]:
+    import re
+
+    notes: dict[int, str] = {}
+    for block in re.split(r"^## Slide ", path.read_text(encoding="utf-8"), flags=re.M)[1:]:
+        head, _, body = block.partition("\n")
+        number = int(head.split(":", 1)[0])
+        body = body.split("\n---", 1)[0].strip()
+        notes[number] = body.replace("**", "")
+    return notes
+
+
+notes = load_notes(SCRIPT)
+slides = list(prs.slides)
+missing = [n for n in range(1, len(slides) + 1) if n not in notes]
+if missing:
+    raise SystemExit(f"speaker_script.md has no section for slide(s) {missing}")
+for n, sl in enumerate(slides, start=1):
+    sl.notes_slide.notes_text_frame.text = notes[n]
+
 out = REPO / "presentation" / "Case_Study_2_Final_Presentation.pptx"
 prs.save(str(out))
-print(f"wrote {out.relative_to(REPO)}  ({len(prs.slides.__iter__.__self__._sldIdLst)} slides)")
+print(f"wrote {out.relative_to(REPO)}  ({len(slides)} slides, speaker notes on every one)")
